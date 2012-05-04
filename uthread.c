@@ -3,7 +3,17 @@
 #include "fcntl.h"
 #include "uthread.h"
 
-int first_uthread = 1;
+#define ROUND_ROBIN 0
+#define PRIORITY_BASED 1
+
+int sched = ROUND_ROBIN;
+
+#ifdef SCHED_PB
+sched = PRIORITY_BASED;
+#endif
+
+int first_uthread = 1;		/* flag to make sure the ut_table is
+                                   initialized only once.  */
 uthread_table ut_table;
 
 
@@ -44,7 +54,6 @@ int uthread_create(void (*start_func)(), int priority){
     if (ut_table.highest_p > priority) /* new top priority thread */
         ut_table.highest_p = priority;
     ut_table.threads[ut_id]->priority = priority;
-    ut_table.threads[ut_id]->ss_size = 0;
     ut_table.threads[ut_id]->tid = ut_id;
     STORE_ESP(current_esp);
     /* create the initial stack for the new thread */
@@ -56,8 +65,8 @@ int uthread_create(void (*start_func)(), int priority){
                                    calls, this will be the next
                                    function to call. */
     PUSH(ut_table.threads[ut_id]->ss_sp);
-    /* update the ss_size */
-    ut_table.threads[ut_id]->ss_size = 12;
+    /* update the ss_esp */
+    ut_table.threads[ut_id]->ss_esp = ut_table.threads[ut_id]->ss_sp - 12;
 
 
 
@@ -65,14 +74,42 @@ int uthread_create(void (*start_func)(), int priority){
 }
 
 
-void uthread_yield() {
-
+uthread_t* next_thread(int start) {
+    uthread_t *next;
+    for (;;start = (start + 1) % MAX_UTHREADS) {
+        next = ut_table.threads[start];
+        if (next != 0) {
+            if (sched == ROUND_ROBIN ||
+                next->priority == ut_table.highest_p) {
+                return next;
+            }
+        }
+    }
 }
+
+uthread_t uthread_self() {uthread_t t; return t;}
+
+void uthread_yield() {
+    /* save_esp */
+    uthread_t self;
+    uthread_t *next;
+
+    self = uthread_self();
+    STORE_ESP(self.ss_esp);
+    /* correct uthread_t (self, next), old_epb, return address, (no
+       function Argos) */
+    self.ss_esp += (8 + (2 * (sizeof(uthread_t))));
+    next = next_thread(self.tid);
+    LOAD_ESP(next->ss_esp);
+    /* return to the chosen uthread */
+}
+
+
 void uthread_exit(){}
 int uthread_start_all() {return 0;}
 int uthread_setpr(int priority) {return 0;}
 int uthread_getpr() {return -1;}
-uthread_t uthread_self();
+
 
 
 void wrap_function(void (*entry)()) {
@@ -81,5 +118,4 @@ void wrap_function(void (*entry)()) {
        This makes it possible to use wrap_function for future calls,
        by pushing the next function to run as a function arg, and the
        caller as the return address.                                 */
-
 }

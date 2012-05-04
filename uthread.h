@@ -1,6 +1,6 @@
 
 /********************************
-	Majors which inline assembly
+        Majors which inline assembly
  ********************************/
 
 // Saves the value of esp to var
@@ -25,7 +25,7 @@ typedef struct
 {
     int tid;		// A unique thread ID within the process
     void *ss_sp;	// Stack base or pointer
-    int ss_size;	// Stack size
+    void *ss_esp;	// Stack size
     int priority;	// The priority of the thread 0...9 (0 is highest)
 } uthread_t;
 
@@ -37,7 +37,7 @@ typedef struct
 } uthread_table;
 
 /********************************
-	The API of the ULT package
+        The API of the ULT package
  ********************************/
 
 int uthread_create(void (*start_func)(), int priority);
