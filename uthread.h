@@ -1,6 +1,6 @@
 
 /********************************
-        Macors which inline assembly
+	Majors which inline assembly
  ********************************/
 
 // Saves the value of esp to var
@@ -16,22 +16,28 @@
 #define PUSH(var)		asm("movl %0, %%edi; push %%edi;" : : "r" ( var ))
 
 
-
 #define MAX_UTHREADS 64
+#define UTHREAD_STACK_SIZE 4000
 
 // Represents a ULT.
 // Feel free to extend this definition as needed.
 typedef struct
 {
-        int tid;				// A unique thread ID within the process
-        void *ss_sp;		// Stack base or pointer
-        int ss_size;	// Stack size
-        int priority;		// The priority of the thread 0...9 (0 is highest)
+    int tid;		// A unique thread ID within the process
+    void *ss_sp;	// Stack base or pointer
+    int ss_size;	// Stack size
+    int priority;	// The priority of the thread 0...9 (0 is highest)
 } uthread_t;
 
+typedef struct
+{
+    int cur_threads;
+    int highest_p;
+    uthread_t *threads[MAX_UTHREADS];
+} uthread_table;
 
 /********************************
-        The API of the ULT package
+	The API of the ULT package
  ********************************/
 
 int uthread_create(void (*start_func)(), int priority);
