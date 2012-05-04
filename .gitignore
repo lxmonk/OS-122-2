@@ -1,0 +1,10 @@
+.svn
+*.o
+*.sym
+*.img
+*.asm
+_*
+kernel
+.gdbinit
+*.d
+*~

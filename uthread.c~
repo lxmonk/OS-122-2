@@ -1,0 +1,7 @@
+#include "uthread.h"
+
+void wrap_function(void (*entry)())
+{
+  entry();
+  uthread_yield();
+}
