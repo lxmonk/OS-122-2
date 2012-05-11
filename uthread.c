@@ -61,7 +61,7 @@ int uthread_create(void (*start_func)(), int priority){
     ut_table.threads[ut_id]->priority = priority;
     ut_table.threads[ut_id]->tid = ut_id;
     DEBUG_PRINT("ut_id=%d, ut_table.threads[ut_id]->tid=%d",
-                ut_id, ut_table.threads[ut_id]->tid=%d);
+                ut_id, ut_table.threads[ut_id]->tid);
     STORE_ESP(current_esp);
     /* create the initial stack for the new thread */
     LOAD_ESP(ut_table.threads[ut_id]->ss_sp);
