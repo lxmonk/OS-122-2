@@ -152,6 +152,7 @@ void uthread_exit() {
 
 int uthread_start_all() {
     uthread_t *next;
+    int esp;
 
     DEBUG_PRINT("inside.", 999);
 
@@ -165,11 +166,14 @@ int uthread_start_all() {
     DEBUG_PRINT("didn't fail - let's do it", 101);
     /* let's do it. */
     next = next_thread(0);	/* start with the 1st thread */
-    DEBUG_PRINT("got next thread. tid=%d ss_esp=%x", next->tid, next->ss_esp);
+    STORE_ESP(esp);
+    DEBUG_PRINT("got next thread. tid=%d ESP=%x ss_esp=%x",
+                next->tid, esp, next->ss_esp);
     ut_table.running_tid = next->tid;
     DEBUG_PRINT("running thread updated", 78);
     LOAD_ESP(next->ss_esp);
-    DEBUG_PRINT("ESP loaded", 88);
+    STORE_ESP(esp);
+    DEBUG_PRINT("ESP loaded. ESP=%x ss_esp=%x", esp, next->ss_esp);
     /* pass control to the chosen uthread */
     return 0;                   /* this should never be reached :) */
 }

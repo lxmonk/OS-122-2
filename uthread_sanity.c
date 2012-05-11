@@ -10,8 +10,8 @@ void
 thread_do() {
     int i, tid;
 
-    printf(2, "inside thread\n");
     tid = uthread_self().tid;
+    DEBUG_PRINT("inside thread %d", tid);
     for (i=0; i<k_stat; i++) {
         printf(2, "thread %d iteration %d\n", tid, i);
         uthread_yield();
@@ -23,7 +23,7 @@ int
 main(int argc, char** argv) {
     int n;
     int c;
-    int ret;
+    int ret, esp;
 
     n = atoi(argv[1]);
     k_stat = atoi(argv[2]);
@@ -34,8 +34,12 @@ main(int argc, char** argv) {
         ret = uthread_create(thread_do, 0);
         DEBUG_PRINT("creating thread %d. ret=%d", c, ret);
     }
+    STORE_ESP(esp);
+    DEBUG_PRINT("Before 'uthread_start_all' ESP=%x", esp);
     DEBUG_PRINT("calling uthread_start_all", 999);
     uthread_start_all();
+    STORE_ESP(esp);
+    DEBUG_PRINT("After 'uthread_start_all' ESP=%x", esp);
     printf(2, "this will not be printed\n");
     return 0;
 }
