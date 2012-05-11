@@ -133,6 +133,7 @@ uthread_t* next_thread(int start) {
 uthread_t uthread_self() {
     DEBUG_PRINT(3, "returning ut_table.running_tid=%d", ut_table.running_tid);
     DEBUG_PRINT(3,"ut_table.threads[ut_table.running_tid]->tid=%d",ut_table.threads[ut_table.running_tid]->tid);
+    DEBUG_PRINT(3,"ut_table.threads[1]->tid=%d",ut_table.threads[1]->tid);
     return *(ut_table.threads[ut_table.running_tid]);
 }
 static uthread_t *s_self;
@@ -154,11 +155,11 @@ void uthread_yield() {
     /* correct uthread_t (self, next), old_epb, return address, (no
        function Args) */
     /* s_self->ss_esp += (8 + (2 * (sizeof(uthread_t)))); */
-    s_next = next_thread((s_self->tid + 1) % MAX_UTHREADS);
+    s_next = next_thread(((s_self->tid) + 1) % MAX_UTHREADS);
     DEBUG_PRINT(3, "next->tid=%d", s_next->tid);
     ut_table.running_tid = s_next->tid;
-    LOAD_ESP(s_next->ss_esp);
-    LOAD_EBP(s_next->ss_ebp);
+    //  LOAD_ESP(s_next->ss_esp);
+    // LOAD_EBP(s_next->ss_ebp);
     DEBUG_PRINT(3, "s_next->ss_esp=%x, s_next->ss_ebp=%x",
                 s_next->ss_esp, s_next->ss_ebp);
     if (s_next->virgin) {
