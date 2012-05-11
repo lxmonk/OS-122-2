@@ -22,6 +22,7 @@ uthread_table ut_table;
 int uthread_create(void (*start_func)(), int priority){
     int ut_id;
     void* current_esp;
+    int debug;
 
     DEBUG_PRINT("inside uthread_create", 999);
     if (first_uthread) {	/* initialize the uthreads table */
@@ -61,17 +62,26 @@ int uthread_create(void (*start_func)(), int priority){
     ut_table.threads[ut_id]->priority = priority;
     ut_table.threads[ut_id]->tid = ut_id;
     STORE_ESP(current_esp);
+    DEBUG_PRINT("current esp: %x ", current_esp);
     /* create the initial stack for the new thread */
     LOAD_ESP(ut_table.threads[ut_id]->ss_sp);
+    DEBUG_PRINT("loded esp  esp: %x",ut_table.threads[ut_id]->ss_sp );
     PUSH(start_func);
+    STORE_ESP(debug);
+    DEBUG_PRINT("after 1 push: %x - start func",debug );
     PUSH(uthread_exit);
+    STORE_ESP(debug);
+    DEBUG_PRINT("after 2  push: %x exit func",debug );
     /* the 'return address' will be calling uthread_exit (after
        start_func is done). on later calls, this will be the next
        function to call. */
 
     PUSH(ut_table.threads[ut_id]->ss_sp);
+    STORE_ESP(debug);
+    DEBUG_PRINT("after 3  push: %x thread esp",debug );
     /* update the ss_esp */
     ut_table.threads[ut_id]->ss_esp = ut_table.threads[ut_id]->ss_sp - 12;
+    DEBUG_PRINT("changed back to loded  esp  esp: %x",ut_table.threads[ut_id]->ss_sp );
     LOAD_ESP(current_esp);	/* restore the calling thread's stack */
     return ut_id;		/* these will be recycled */
 }
@@ -150,6 +160,7 @@ void uthread_exit() {
 
 int uthread_start_all() {
     uthread_t *next;
+    int debug;
 
     if (first_uthread)
         return -1;		/* uthread_create wasn't called at all */
@@ -161,7 +172,12 @@ int uthread_start_all() {
     /* let's do it. */
     next = next_thread(0);	/* start with the 1st thread */
     ut_table.running_tid = next->tid;
+    DEBUG_PRINT("chosen thread is %d",next->tid);
+    STORE_ESP(debug);
+    DEBUG_PRINT("BEFORE LOAD - cur esp: %x  next esp: %x",debug,next->ss_esp);
     LOAD_ESP(next->ss_esp);
+    STORE_ESP(debug);
+    DEBUG_PRINT("AFTER LOAD - cur esp: %x  next esp: %x",debug,next->ss_esp);
     /* pass control to the chosen uthread */
     return 0;                   /* this should never be reached :) */
 }
