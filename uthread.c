@@ -18,6 +18,20 @@ int first_uthread = 1;		/* flag to make sure the ut_table is
                                    initialized only once.  */
 uthread_table ut_table;
 
+void
+print_tinfo() {
+    int i;
+    uthread_t *cur;
+
+    for (i = 0; i < MAX_UTHREADS; i++) {
+        cur = ut_table.threads[i];
+        if (cur != 0) {
+            DEBUG_PRINT("%d) tid=%d, ss_sp=%x, ss_esp=%x, priority=%d",
+                        i, cur->tid, cur->ss_sp, cur->ss_esp,
+                        cur->priority);
+        }
+    }
+}
 
 int uthread_create(void (*start_func)(), int priority){
     int ut_id;
@@ -53,6 +67,10 @@ int uthread_create(void (*start_func)(), int priority){
                                                   previous malloc */
         return -1;
     }
+    ut_table.threads[ut_id]->ss_sp += (UTHREAD_STACK_SIZE);
+
+    DEBUG_PRINT("%d: ss_sp is %x," /* stack will be at %x" */, ut_id,
+                ut_table.threads[ut_id]->ss_sp);
     /* mallocs were successful */
 
     ut_table.cur_threads++;
@@ -60,9 +78,16 @@ int uthread_create(void (*start_func)(), int priority){
         ut_table.highest_p = priority;
     ut_table.threads[ut_id]->priority = priority;
     ut_table.threads[ut_id]->tid = ut_id;
-    DEBUG_PRINT("ut_id=%d, ut_table.threads[ut_id]=%x",
+    DEBUG_PRINT("ut_id=%d, ut_table.threads[ut_id]=%x, "
+                "ut_table.threads[ut_id]->tid=%d, "
+                "&ut_table.threads[ut_id]->tid=%x",
                 ut_id, ut_table.threads[ut_id],
-                ut_table.threads[ut_id]->tid);
+                ut_table.threads[ut_id]->tid,
+                &(ut_table.threads[ut_id]->tid));
+
+    if (T_A_DEBUG) {
+        print_tinfo();
+    }
     STORE_ESP(current_esp);
     /* create the initial stack for the new thread */
     LOAD_ESP(ut_table.threads[ut_id]->ss_sp);
@@ -76,7 +101,7 @@ int uthread_create(void (*start_func)(), int priority){
 
     PUSH(ut_table.threads[ut_id]->ss_sp);
     /* update the ss_esp */
-    ut_table.threads[ut_id]->ss_esp = ut_table.threads[ut_id]->ss_sp - 12;
+    ut_table.threads[ut_id]->ss_esp = ut_table.threads[ut_id]->ss_sp - 8;
     LOAD_ESP(current_esp);	/* restore the calling thread's stack */
     return ut_id;		/* these will be recycled */
 }
@@ -116,7 +141,7 @@ void uthread_yield() {
        function Args) */
     self.ss_esp += (8 + (2 * (sizeof(uthread_t))));
     next = next_thread((self.tid + 1) % MAX_UTHREADS);
-    DEBUG_PRINT("next-tid=%d", next->tid);
+    DEBUG_PRINT("next->tid=%d", next->tid);
     ut_table.running_tid = next->tid;
     LOAD_ESP(next->ss_esp);
     /* return to the chosen uthread */
