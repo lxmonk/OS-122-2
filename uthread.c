@@ -60,6 +60,8 @@ int uthread_create(void (*start_func)(), int priority){
         ut_table.highest_p = priority;
     ut_table.threads[ut_id]->priority = priority;
     ut_table.threads[ut_id]->tid = ut_id;
+    DEBUG_PRINT("ut_id=%d, ut_table.threads[ut_id]->tid=%d",
+                ut_id, ut_table.threads[ut_id]->tid=%d);
     STORE_ESP(current_esp);
     /* create the initial stack for the new thread */
     LOAD_ESP(ut_table.threads[ut_id]->ss_sp);
@@ -81,11 +83,15 @@ int uthread_create(void (*start_func)(), int priority){
 
 uthread_t* next_thread(int start) {
     uthread_t *next;
+    DEBUG_PRINT("inside next", 900);
     for (;;start = (start + 1) % MAX_UTHREADS) {
+        DEBUG_PRINT("start=%d", start);
         next = ut_table.threads[start];
+        DEBUG_PRINT("next->tid=%d", next->tid);
         if (next != 0) {
             if (sched == ROUND_ROBIN ||
                 next->priority == ut_table.highest_p) {
+                DEBUG_PRINT("returning thread with tid=%d", next->tid);
                 return next;
             }
         }

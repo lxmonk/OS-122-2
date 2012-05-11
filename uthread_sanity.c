@@ -13,7 +13,7 @@ thread_do() {
     tid = uthread_self().tid;
     DEBUG_PRINT("inside thread %d", tid);
     for (i=0; i<k_stat; i++) {
-        printf(2, "thread %d iteration %d\n", tid, i);
+        printf(2, "thread %d iteration %d\n", uthread_self().tid, i);
         uthread_yield();
     }
     uthread_exit();
