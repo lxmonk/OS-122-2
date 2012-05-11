@@ -23,14 +23,14 @@ int uthread_create(void (*start_func)(), int priority){
     int ut_id;
     void* current_esp;
 
-    DEBUG_PRINT("debug_print", 999);
+    DEBUG_PRINT("inside uthread_create", 999);
     if (first_uthread) {	/* initialize the uthreads table */
+        DEBUG_PRINT("inside 'first_uthread' loop", 999);
         ut_table.cur_threads = 0;
         ut_table.highest_p = 9;
         ut_table.running_tid = -1;
         memset(ut_table.threads, 0, sizeof(ut_table.threads));
         first_uthread = 0;
-
     }
     if (ut_table.cur_threads == MAX_UTHREADS) {
         return -1;

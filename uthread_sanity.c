@@ -2,6 +2,8 @@
 #include "types.h"
 #include "user.h"
 
+#define T_A_DEBUG 1
+
 static int k_stat = 0;
 
 void
@@ -21,16 +23,18 @@ int
 main(int argc, char** argv) {
     int n;
     int c;
+    int ret;
 
     n = atoi(argv[1]);
     k_stat = atoi(argv[2]);
-    printf(2, "n=%d k=%d\n", n, k_stat);
+
+    DEBUG_PRINT("n=%d k=%d", n, k_stat);
 
     for (c=0; c < n; c++) {
-        uthread_create(thread_do, 0);
-        printf(2, "creating thread %d\n", c);
+        ret = uthread_create(thread_do, 0);
+        DEBUG_PRINT("creating thread %d. ret=%d", c, ret);
     }
-    printf(2, "calling uthread_start_all\n");
+    DEBUG_PRINT("calling uthread_start_all", 999);
     uthread_start_all();
     printf(2, "this will not be printed\n");
     return 0;
