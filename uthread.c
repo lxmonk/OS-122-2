@@ -63,8 +63,10 @@ int uthread_create(void (*start_func)(), int priority){
     STORE_ESP(current_esp);
     /* create the initial stack for the new thread */
     LOAD_ESP(ut_table.threads[ut_id]->ss_sp);
-    PUSH(start_func);
-    PUSH(uthread_exit);
+
+    PUSH(wrap_function);
+    /* PUSH(start_func); */
+    /* PUSH(uthread_exit); */
     /* the 'return address' will be calling uthread_exit (after
        start_func is done). on later calls, this will be the next
        function to call. */
@@ -151,6 +153,8 @@ void uthread_exit() {
 int uthread_start_all() {
     uthread_t *next;
 
+    DEBUG_PRINT("inside.", 999);
+
     if (first_uthread)
         return -1;		/* uthread_create wasn't called at all */
     if (ut_table.cur_threads == 0)
@@ -158,10 +162,14 @@ int uthread_start_all() {
     if (ut_table.running_tid != -1)
         return -1;		/* uthread_start_all was already
                                    called before. */
+    DEBUG_PRINT("didn't fail - let's do it", 101);
     /* let's do it. */
     next = next_thread(0);	/* start with the 1st thread */
+    DEBUG_PRINT("got next thread. tid=%d ss_esp=%x", next->tid, next->ss_esp);
     ut_table.running_tid = next->tid;
+    DEBUG_PRINT("running thread updated", 78);
     LOAD_ESP(next->ss_esp);
+    DEBUG_PRINT("ESP loaded", 88);
     /* pass control to the chosen uthread */
     return 0;                   /* this should never be reached :) */
 }
@@ -181,7 +189,9 @@ int uthread_getpr() {
 }
 
 void wrap_function(void (*entry)()) {
+    DEBUG_PRINT("wrap_function called", 999);
     entry();
+    uthread_exit();
     /* implicitly return to the address stored on the stack.
        This makes it possible to use wrap_function for future calls,
        by pushing the next function to run as a function arg, and the
