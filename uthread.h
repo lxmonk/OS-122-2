@@ -10,10 +10,17 @@
 #define LOAD_ESP(var)   asm("movl %0, %%esp;" : : "r" ( var ))
 
 // Calls the function func
-#define CALL(addr)		asm("call *%0;" : : "r" ( addr ))
+#define CALL(addr)	asm("call *%0;" : : "r" ( addr ))
 
 // Pushes the contents of var to the stack
-#define PUSH(var)		asm("movl %0, %%edi; push %%edi;" : : "r" ( var ))
+#define PUSH(var)	asm("movl %0, %%edi; push %%edi;" : : "r" ( var ))
+
+
+/* A&T macros for EBP */
+#define STORE_EBP(var)          asm("movl %%ebp, %0;" : "=r" ( var ))
+
+#define LOAD_EBP(var)           asm("movl %0, %%ebp;" : : "r" ( var ))
+/* A&T - end of macros */
 
 
 #define MAX_UTHREADS 64
@@ -25,8 +32,11 @@ typedef struct
 {
     int tid;		// A unique thread ID within the process
     void *ss_sp;	// Stack base or pointer
-    void *ss_esp;	// Stack size
+    void *ss_esp;	// Stack pointer
+    void *ss_ebp;	/* stack BASE pointer */
     int priority;	// The priority of the thread 0...9 (0 is highest)
+    void (*entryfunc)();
+    int virgin;
 } uthread_t;
 
 typedef struct
