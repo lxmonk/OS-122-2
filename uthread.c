@@ -102,11 +102,13 @@ void uthread_yield() {
     uthread_t *next;
 
     self = uthread_self();
+    DEBUG_PRINT("self.tid=%d", self.tid);
     STORE_ESP(self.ss_esp);
     /* correct uthread_t (self, next), old_epb, return address, (no
        function Args) */
     self.ss_esp += (8 + (2 * (sizeof(uthread_t))));
     next = next_thread((self.tid + 1) % MAX_UTHREADS);
+    DEBUG_PRINT("next-tid=%d", next->tid);
     ut_table.running_tid = next->tid;
     LOAD_ESP(next->ss_esp);
     /* return to the chosen uthread */
