@@ -34,6 +34,7 @@ typedef struct
     int cur_threads;
     int highest_p;
     uthread_t *threads[MAX_UTHREADS];
+    int running_tid;
 } uthread_table;
 
 /********************************
@@ -49,5 +50,5 @@ int uthread_getpr();
 uthread_t uthread_self();
 
 // A function that wraps the entry functipn of a thread.
-// This is just a siggestion, fell free to modify it as needed.
+// This is just a suggestion, feel free to modify it as needed.
 void wrap_function(void (*entry)());
