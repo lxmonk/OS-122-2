@@ -3,10 +3,10 @@
 #define MAX_CONDS 64
 
 /********************************
-	The API of the KLT package
+        The API of the KLT package
  ********************************/
 
-int kthread_create( void*(*start_func)(), void* stack, unit stack_size ); 
+int kthread_create( void*(*start_func)(), void* stack, uint stack_size );
 int kthread_id();
 void kthread_exit();
 int kthread_join( int thread_id );
