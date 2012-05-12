@@ -71,7 +71,9 @@ found:
   p->context->eip = (uint)forkret;
 
   /* A&T initialize */
-  return p->threads_created = 1;;
+  p->threads_created = 1;
+
+  return p;
 }
 
 //PAGEBREAK: 32
@@ -170,20 +172,18 @@ fork_kthread( void*(*start_func)(), void* stack)
     if((np = allocproc()) == 0)
         return -1;
 
+
     // Copy process state from p.
-    if((np->pgdir = copyuvm(proc->pgdir, proc->sz)) == 0){
-        kfree(np->kstack);
-        np->kstack = 0;
-        np->state = UNUSED;
-        return -1;
-    }
+    /* A&T can't fail, no checks. */
+    np->pgdir = proc->pgdir;
     np->sz = proc->sz;
     np->parent = proc;
     *np->tf = *proc->tf;
 
-    // Clear %eax so that fork returns 0 in the child.
-    /* TODO: update eis and esp */
-    /* np->tf->eax = 0; */
+    /* A&T use the given stack */
+    np->tf->esp = (uint) stack;
+    np->tf->eip = (uint) start_func;
+    /* A&T end */
 
     for(i = 0; i < NOFILE; i++)
         if(proc->ofile[i])

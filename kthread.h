@@ -2,7 +2,7 @@
 #define MAX_MUTEXES 64
 #define MAX_CONDS 64
 
-typedef unsigned int uint;
+#include "types.h"
 
 /********************************
         The API of the KLT package
