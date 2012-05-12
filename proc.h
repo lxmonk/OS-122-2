@@ -54,6 +54,8 @@ enum procstate { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 typedef void (*sighandler_t)(void);
 
 struct k_thread_counter;
+struct k_thread_join;
+
 // Per-process state
 struct proc {
   uint sz;                     // Size of process memory (bytes)
@@ -73,11 +75,14 @@ struct proc {
     /* A&T boolean and synchronized ref counter */
   int threads_created;
   struct k_thread_counter *k_threads;
+  struct k_thread_join *join_facility;
 };
 
 /* A&T for kernel threads */
 int fork_kthread( void*(*start_func)(), void* stack);
 int get_id(void);
+void proc_kthread_exit(void);
+int proc_kthread_join( int thread_id );
 
 // Process memory is laid out contiguously, low addresses first:
 //   text

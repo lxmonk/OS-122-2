@@ -26,6 +26,14 @@ pinit(void)
   initlock(&ptable.lock, "ptable");
 }
 
+
+typedef struct k_thread_join {
+    struct spinlock wait_lock;
+    struct spinlock join_lock;
+    int taken;
+} k_thread_join;
+
+
 //PAGEBREAK: 32
 // Look in the process table for an UNUSED proc.
 // If found, change state to EMBRYO and initialize
@@ -50,10 +58,21 @@ found:
   release(&ptable.lock);
 
   // Allocate kernel stack.
-  if((p->kstack = kalloc()) == 0){
-    p->state = UNUSED;
-    return 0;
+  if ((p->kstack = kalloc()) == 0){
+      p->state = UNUSED;
+      return 0;
   }
+
+  /* A&T create the k_thread_join facility */
+  if ((p->join_facility = ((void*) kalloc())) == 0) {
+      kfree(p->kstack);
+      p->state = UNUSED;
+      return 0;
+  }
+
+  ((k_thread_join*)(p->join_facility))->taken = 0;
+
+  /* A&T end */
   sp = p->kstack + KSTACKSIZE;
 
   // Leave room for trap frame.
@@ -169,6 +188,7 @@ struct k_thread_counter {
     int counter;
 };
 
+
 int		/* A&T for use by kthread_create */
 fork_kthread( void*(*start_func)(), void* stack)
 {
@@ -183,7 +203,7 @@ fork_kthread( void*(*start_func)(), void* stack)
     if (proc->threads_created == 0) {
         /* thread counter not yet initialized */
         if ((proc->k_threads = ((void*) kalloc())) == 0) {
-            /* malloc failed, free all of 'np' */
+            /* kalloc failed, free all of 'np' */
             kfree(np->kstack);
             np->kstack = 0;
             np->state = UNUSED;
@@ -195,6 +215,8 @@ fork_kthread( void*(*start_func)(), void* stack)
                                      threads (original proc and T0) */
         proc->threads_created = 1;
     }
+
+    np->k_threads = proc->k_threads;
     // A&T use process state from p.
     /* A&T can't fail, no checks. */
     np->pgdir = proc->pgdir;
@@ -441,6 +463,7 @@ sleep(void *chan, struct spinlock *lk)
   sched();
 
   // Tidy up.
+
   proc->chan = 0;
 
   // Reacquire original lock.
@@ -532,7 +555,51 @@ procdump(void)
   }
 }
 
-int get_id(){
-
+/* A&T functions for kthreads */
+int get_id() {
     return proc->pid;
+}
+
+void proc_kthread_exit() {
+    int try;
+
+    acquire(&proc->k_threads->lock);
+    proc->k_threads->counter--;
+    if (proc->k_threads->counter == 0) {
+        /* this is the last thread - terminate the process */
+        release(&proc->k_threads->lock); /* for good manners.. :] */
+        kfree((char*)proc->k_threads);          /* free k_threads */
+        proc->killed = 1;	/* kill this process */
+        return;
+    }
+    try = try_lock(&(proc->join_facility->join_lock)); /* if no one is there -
+                                                          no one will get in. */
+    if (try != 0)		/* someone is waiting */
+        release(&proc->join_facility->wait_lock);
+    else
+        popcli();               /* never releasing join_lock */
+
+}
+
+int proc_kthread_join(int thread_id) {
+    int try;
+    struct proc *p;
+
+    acquire(&ptable.lock);
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+        if (p->pid == thread_id && !p->killed) /* no optimization */
+                goto alive;
+    }
+    release(&ptable.lock);
+    return -1;			/* couldn't find requested thread. */
+
+ alive:
+    release(&ptable.lock);
+    try = try_lock(&(p->join_facility->join_lock));
+    if (try != 0)
+        return -1;		/* someone already following him (or
+                                   he's killing himself..) */
+    acquire(&(p->join_facility->wait_lock));
+    popcli();			/* to correct join_lock not being released */
+    return 0;			/* NOT RELEASING join_lock! */
 }

@@ -30,7 +30,7 @@ acquire(struct spinlock *lk)
 
   // The xchg is atomic.
   // It also serializes, so that reads after acquire are not
-  // reordered before it. 
+  // reordered before it.
   while(xchg(&lk->locked, 1) != 0)
     ;
 
@@ -49,7 +49,7 @@ release(struct spinlock *lk)
   lk->pcs[0] = 0;
   lk->cpu = 0;
 
-  // The xchg serializes, so that reads before release are 
+  // The xchg serializes, so that reads before release are
   // not reordered after it.  The 1996 PentiumPro manual (Volume 3,
   // 7.2) says reads can be carried out speculatively and in
   // any order, which implies we need to serialize here.
@@ -69,7 +69,7 @@ getcallerpcs(void *v, uint pcs[])
 {
   uint *ebp;
   int i;
-  
+
   ebp = (uint*)v - 2;
   for(i = 0; i < 10; i++){
     if(ebp == 0 || ebp < (uint*)KERNBASE || ebp == (uint*)0xffffffff)
@@ -89,6 +89,30 @@ holding(struct spinlock *lock)
 }
 
 
+/* A&T try to catch the lock, but only once (non-blocking), if you've
+   failed, return -1 immediately */
+int
+try_lock(struct spinlock *lk)
+{
+    pushcli(); // disable interrupts to avoid deadlock.
+    if(holding(lk))
+        panic("acquire");
+
+    // The xchg is atomic.
+    // It also serializes, so that reads after acquire are not
+    // reordered before it.
+    if(xchg(&lk->locked, 1) != 0) {
+        popcli();
+        return -1;		/* failed to acquire */
+    }
+    // Record info about lock acquisition for debugging.
+    lk->cpu = cpu;
+    getcallerpcs(&lk, lk->pcs);
+    return 0;
+}
+
+
+
 // Pushcli/popcli are like cli/sti except that they are matched:
 // it takes two popcli to undo two pushcli.  Also, if interrupts
 // are off, then pushcli, popcli leaves them off.
@@ -97,7 +121,7 @@ void
 pushcli(void)
 {
   int eflags;
-  
+
   eflags = readeflags();
   cli();
   if(cpu->ncli++ == 0)
@@ -114,4 +138,3 @@ popcli(void)
   if(cpu->ncli == 0 && cpu->intena)
     sti();
 }
-

@@ -25,6 +25,10 @@ int kthread_id() {
     return get_id();
 }
 
-void kthread_exit() {}
+void kthread_exit() {
+    void proc_kthread_exit();
+}
 
-int kthread_join( int thread_id ) {return -1;}
+int kthread_join( int thread_id ) {
+    return proc_kthread_join(thread_id);
+}
