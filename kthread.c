@@ -15,12 +15,9 @@
 
 #include "kthread.h"
 
-struct k_thread_counter {
-    struct spinlock lock;
-    int counter;
-};
 
-int kthread_create( void*(*start_func)(), void* stack, uint stack_size ) {
+int
+kthread_create(void*(*start_func)(), void* stack, uint stack_size) {
     return fork_kthread(start_func, stack);
 
 }

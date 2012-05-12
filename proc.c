@@ -162,6 +162,13 @@ fork(void)
   safestrcpy(np->name, proc->name, sizeof(proc->name));
   return pid;
 }
+
+
+struct k_thread_counter {
+    struct spinlock lock;
+    int counter;
+};
+
 int		/* A&T for use by kthread_create */
 fork_kthread( void*(*start_func)(), void* stack)
 {
@@ -172,8 +179,23 @@ fork_kthread( void*(*start_func)(), void* stack)
     if((np = allocproc()) == 0)
         return -1;
 
+    /* A&T  */
+    if (proc->threads_created == 0) {
+        /* thread counter not yet initialized */
+        if ((proc->k_threads = ((void*) kalloc())) == 0) {
+            /* malloc failed, free all of 'np' */
+            kfree(np->kstack);
+            np->kstack = 0;
+            np->state = UNUSED;
+            return -1;
+        }
 
-    // Copy process state from p.
+        initlock(&(proc->k_threads->lock), proc->name);
+        proc->k_threads->counter = 2; /* A&T ref counter now has 2
+                                     threads (original proc and T0) */
+        proc->threads_created = 1;
+    }
+    // A&T use process state from p.
     /* A&T can't fail, no checks. */
     np->pgdir = proc->pgdir;
     np->sz = proc->sz;
@@ -193,6 +215,7 @@ fork_kthread( void*(*start_func)(), void* stack)
     pid = np->pid;
     np->state = RUNNABLE;
     safestrcpy(np->name, proc->name, sizeof(proc->name));
+
     return pid;
 }
 

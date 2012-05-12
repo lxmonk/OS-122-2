@@ -8,3 +8,6 @@ kernel
 .gdbinit
 *.d
 *~
+/bootblock
+/initcode.out
+/mkfs
