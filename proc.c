@@ -507,4 +507,8 @@ procdump(void)
     }
     cprintf("\n");
   }
+
+  struct proc* get_current_kthread(){
+      return proc;
+  }
 }

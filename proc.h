@@ -77,8 +77,10 @@ struct proc {
 
 int fork_kthread( void*(*start_func)(), void* stack);
 
+
 // Process memory is laid out contiguously, low addresses first:
 //   text
 //   original data and bss
 //   fixed-size stack
 //   expandable heap
+struct proc* get_current_kthread();

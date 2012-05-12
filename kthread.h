@@ -2,13 +2,20 @@
 #define MAX_MUTEXES 64
 #define MAX_CONDS 64
 
-#include "types.h"
 
-/********************************
-        The API of the KLT package
- ********************************/
+typedef struct {
+    struct spinlock lock;
+    void *waiting_kthreads[NPROC];
+    int first;
+    int count;
+} kthread_mutex_t;
 
-int kthread_create( void*(*start_func)(), void* stack, uint stack_size );
+static struct spinlock array_lock;
+static kthread_mutex_t *mutex_p_array[MAX_MUTEXES];
+static volatile int first_mutex = 1;
+
+
+
 int kthread_id();
 void kthread_exit();
 int kthread_join( int thread_id );
