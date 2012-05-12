@@ -85,9 +85,9 @@ int kthread_mutex_lock( int mutex_id ) {
         return 0;
     }
     //join the waiting kthread
-    mutex->waiting_kthreads[mutex->first + mutex->count] = kthread_id();
+    mutex->waiting_kthreads[(mutex->first + mutex->count) % NPROC] = kthread_id();
     mutex->count++;
-    kthread_block(mutex->waiting_kthreads[mutex->first + mutex->count]);
+    kthread_block(mutex->waiting_kthreads[(mutex->first + mutex->count) % NPROC]);
     release(&(mutex->lock));
 
     return 0;
@@ -113,7 +113,65 @@ int kthread_mutex_unlock( int mutex_id ){
     return 0;
 }
 
-int kthread_cond_alloc();
-int kthread_cond_dealloc( int cond_id );
-int kthread_cond_wait( int cond_id, int mutex_id );
-int kthread_cond_signal( int cond_id );
+int kthread_cond_alloc() {
+    int i;
+
+    if (cv_init == 0) {
+        initlock(&cvs_lock, "cv_arrary");
+        acquire(&cvs_lock);
+        if (cv_init == 0) {
+            cv_init = 1;
+            memset(&cvs_used, 0, sizeof(int)*MAX_CONDS);
+        }
+        release(&cvs_lock);
+    }
+
+    acquire(&cvs_lock);
+    for(i=0; i<MAX_CONDS; i++) {
+        if (cvs_used[i] == 0) {
+            cvs_used[i] = 1;
+            break;
+        }
+    }
+    release(&cvs_lock);
+    if (i == MAX_CONDS)
+        return -1;
+
+    memset(cv_arrary[i].waiting_kthreads, 0, sizeof(int)*NPROC);
+    cv_arrary[i].first = 0;
+    cv_arrary[i].count = 0;
+
+    return i;
+}
+
+int kthread_cond_dealloc(int cond_id) {
+    acquire(&cvs_lock);
+    cvs_used[cond_id] = 0;
+    release(&cvs_lock);
+    return 0;
+}
+
+
+int kthread_cond_wait(int cond_id, int mutex_id) {
+    kthread_cond_t *cv;
+    cv = &(cv_arrary[cond_id]);
+
+    cv->waiting_kthreads[(cv->first + cv->count) % NPROC] = kthread_id();
+    cv->first = (cv->first + 1) % NPROC;
+    cv->count++;
+
+    kthread_mutex_unlock(mutex_id);
+    kthread_block(kthread_id());
+    kthread_mutex_lock(mutex_id);
+    return 0;
+}
+int kthread_cond_signal(int cond_id) {
+    kthread_cond_t *cv;
+    cv = &(cv_arrary[cond_id]);
+    if (cv->count > 0) {         /* someone is waiting. */
+        kthread_UNblock(cv->waiting_kthreads[cv->first]);
+        cv->first = (cv->first + 1) % NPROC;
+        cv->count--;
+    }
+    return 0;
+}
