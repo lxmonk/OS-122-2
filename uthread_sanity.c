@@ -13,7 +13,7 @@ thread_do() {
     for (s_i=0; s_i<k_stat; s_i++) {
         DEBUG_PRINT(3, "inside thread %d", s_tid);
         printf(2, "thread %d iteration %d\n", uthread_self().tid, s_i);
-        printf(2, "priority %d\n", uthread_self().priority);
+        //        printf(2, "priority %d\n", uthread_self().priority);
         uthread_yield();
     }
     DEBUG_PRINT(3, "thread tid=%d exiting. s_i=%d", uthread_self().tid,
