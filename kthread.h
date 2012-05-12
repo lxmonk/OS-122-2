@@ -1,6 +1,8 @@
-#dfeine MAX_STACK_SIZE 4000
+#define MAX_STACK_SIZE 4000
 #define MAX_MUTEXES 64
 #define MAX_CONDS 64
+
+typedef unsigned int uint;
 
 /********************************
         The API of the KLT package
