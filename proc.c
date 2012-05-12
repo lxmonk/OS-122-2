@@ -553,10 +553,6 @@ procdump(void)
     }
     cprintf("\n");
   }
-
-  struct proc* get_current_kthread(){
-      return proc;
-  }
 }
 
 /* A&T functions for kthreads */
@@ -606,4 +602,31 @@ int proc_kthread_join(int thread_id) {
     acquire(&(p->join_facility->wait_lock));
     popcli();			/* to correct join_lock not being released */
     return 0;			/* NOT RELEASING join_lock! */
+}
+
+void kthread_block(int thread_id){
+    struct proc *p;
+
+    acquire(&ptable.lock);
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+        if (p->pid == thread_id) {
+            p->state = BLOCKED;
+            release(&ptable.lock);
+            yield();
+            return;
+        }
+    }
+}
+
+void kthread_UNblock(int thread_id){
+    struct proc *p;
+
+    acquire(&ptable.lock);
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+        if (p->pid == thread_id) {
+            p->state = RUNNABLE;
+            release(&ptable.lock);
+            return;
+        }
+    }
 }

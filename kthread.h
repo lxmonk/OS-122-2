@@ -5,13 +5,14 @@
 
 typedef struct {
     struct spinlock lock;
-    void *waiting_kthreads[NPROC];
+    int waiting_kthreads[NPROC];
     int first;
     int count;
 } kthread_mutex_t;
 
 static struct spinlock array_lock;
-static kthread_mutex_t *mutex_p_array[MAX_MUTEXES];
+static kthread_mutex_t mutex_array[MAX_MUTEXES];
+static int  mutex_used[MAX_MUTEXES];
 static volatile int first_mutex = 1;
 
 

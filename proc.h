@@ -49,7 +49,7 @@ struct context {
   uint eip;
 };
 
-enum procstate { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
+enum procstate { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE ,BLOCKED};
 
 typedef void (*sighandler_t)(void);
 
@@ -90,4 +90,9 @@ int proc_kthread_join( int thread_id );
 //   original data and bss
 //   fixed-size stack
 //   expandable heap
-struct proc* get_current_kthread();
+
+//change the kthread state to BLOCKED
+void kthread_block(int thread_id);
+
+//change the kthread state to RUNNABLE
+void kthread_UNblock(int thread_id);
