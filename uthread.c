@@ -3,16 +3,13 @@
 #include "fcntl.h"
 #include "uthread.h"
 
+//#define SCHED_PB  change scheduling policies
+
 #define T_A_DEBUG 0
 
 #define ROUND_ROBIN 0
 #define PRIORITY_BASED 1
 
-int sched = ROUND_ROBIN;
-
-#ifdef SCHED_PB
-sched = PRIORITY_BASED;
-#endif
 
 int first_uthread = 1;		/* flag to make sure the ut_table is
                                    initialized only once.  */
@@ -113,6 +110,14 @@ int uthread_create(void (*start_func)(), int priority){
 
 
 uthread_t* next_thread(int start) {
+
+    int sched;
+#ifdef SCHED_PB
+    sched = PRIORITY_BASED;
+#else
+    sched = ROUND_ROBIN;
+#endif
+
     uthread_t *next;
 
     DEBUG_PRINT(4, "inside next", 900);
@@ -140,6 +145,7 @@ static uthread_t *s_self;
 static uthread_t *s_next;
 
 void uthread_yield() {
+
     /* save_esp */
     DEBUG_PRINT(3, "inside uthread_yield", 178);
     s_self = ut_table.threads[uthread_self().tid];
