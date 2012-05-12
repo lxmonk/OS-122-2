@@ -75,7 +75,9 @@ struct proc {
   struct k_thread_counter *k_threads;
 };
 
+/* A&T for kernel threads */
 int fork_kthread( void*(*start_func)(), void* stack);
+int get_id(void);
 
 // Process memory is laid out contiguously, low addresses first:
 //   text

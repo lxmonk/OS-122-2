@@ -531,3 +531,8 @@ procdump(void)
     cprintf("\n");
   }
 }
+
+int get_id(){
+
+    return proc->pid;
+}
