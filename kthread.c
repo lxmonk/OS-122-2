@@ -9,21 +9,23 @@
 
 #include "kthread.h"
 
-struct k_thread_counter {
-    struct spinlock lock;
-    int counter;
-};
 
-int kthread_create( void*(*start_func)(), void* stack, uint stack_size ) {
+int
+kthread_create(void*(*start_func)(), void* stack, uint stack_size) {
     return fork_kthread(start_func, stack);
-
 }
 
-int kthread_id() {return -1;}
-void kthread_exit() {}
-int kthread_join( int thread_id ) {return -1;}
+int kthread_id() {
+    return get_id();
+}
 
+void kthread_exit() {
+    void proc_kthread_exit();
+}
 
+int kthread_join( int thread_id ) {
+    return proc_kthread_join(thread_id);
+}
 
 int kthread_mutex_alloc() {
     int i;
@@ -66,7 +68,7 @@ int kthread_mutex_lock( int mutex_id ) {
         return -1;
     }
     if (mutex_p_array[mutex_id]->count == 0) {
-        mutex_p_array[mutex_id]->waiting_kthreads[mutex_p_array[mutex_id]->first] =get_current_kthread();
+        //     mutex_p_array[mutex_id]->waiting_kthreads[mutex_p_array[mutex_id]->first] =get_current_kthread();
         mutex_p_array[mutex_id]->count++;
         release(&mutex_p_array[mutex_id]->lock);
         return 0;
