@@ -2,8 +2,7 @@
 #include "types.h"
 #include "user.h"
 
-#define T_A_DEBUG 3
-
+#define T_A_DEBUG 0
 static int k_stat = 0;
 
 void

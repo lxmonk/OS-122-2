@@ -3,7 +3,7 @@
 #include "fcntl.h"
 #include "uthread.h"
 
-#define T_A_DEBUG 3
+#define T_A_DEBUG 0
 
 #define ROUND_ROBIN 0
 #define PRIORITY_BASED 1
@@ -158,8 +158,8 @@ void uthread_yield() {
     s_next = next_thread(((s_self->tid) + 1) % MAX_UTHREADS);
     DEBUG_PRINT(3, "next->tid=%d", s_next->tid);
     ut_table.running_tid = s_next->tid;
-    //  LOAD_ESP(s_next->ss_esp);
-    // LOAD_EBP(s_next->ss_ebp);
+    LOAD_ESP(s_next->ss_esp);
+    LOAD_EBP(s_next->ss_ebp);
     DEBUG_PRINT(3, "s_next->ss_esp=%x, s_next->ss_ebp=%x",
                 s_next->ss_esp, s_next->ss_ebp);
     if (s_next->virgin) {
