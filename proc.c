@@ -91,7 +91,10 @@ found:
 
   /* A&T initialize */
   p->threads_created = 1;
-
+  p->ctime = gettime();		/* creation time */
+  p->etime = 0;			/* ????????? */
+  p->rtime = 0;
+  p->lasttime = 0;
   return p;
 }
 
@@ -373,11 +376,19 @@ scheduler(void)
       proc = p;
       switchuvm(p);
       p->state = RUNNING;
+      /********************* A&T update running statistics */
+      proc->lasttime = gettime();
+      /********************* A&T end ********************* */
       swtch(&cpu->scheduler, proc->context);
       switchkvm();
 
       // Process is done running for now.
       // It should have changed its p->state before coming back.
+
+      /********************* A&T update running statistics */
+      proc->rtime += (proc->lasttime - gettime());
+      /********************* A&T end ********************* */
+
       proc = 0;
     }
     release(&ptable.lock);

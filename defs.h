@@ -77,6 +77,7 @@ void            lapiceoi(void);
 void            lapicinit(int);
 void            lapicstartap(uchar, uint);
 void            microdelay(int);
+int             gettime(void);
 
 // log.c
 void            initlog(void);
