@@ -14,25 +14,32 @@ getConfigValues(void)
 {
     int fd;
     int *val_array = malloc(sizeof(int)*6);
-    char *buf;
     char val[10];
-    int n,i;
+    int n;
 
     // printf(stdout, "open test\n");
     fd = open("ass2_conf.txt", 0);
     if(fd < 0){
-        printf(stdout, "open ass2_conf.txt  failed!\n");
+        printf(2, "open ass2_conf.txt  failed!\n");
         exit();
     }
-    i=0;
-    while((n = read(fd,buf,1)) > 0){
-        val[i]=*buf;
-        i++;
-        if (*buf != '\n')
-            break;
+    for(n=0; n < 6;n++) {
+        memset(val,0,10);
+        read(fd,val,10);
+        val_array[n]=atoi(val);
+
+        printf(2,"s=%s    d=%d\n",val_array[n],val);
     }
-
-
-
     close(fd);
+    return val_array;
+}
+
+
+int main() {
+    int *a;
+
+    a=getConfigValues();
+    printf(2,"%d %d %d %d %d %d",a[0],a[1],a[2],a[3],a[4],a[5]);
+
+    return 0;
 }
