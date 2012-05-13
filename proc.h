@@ -76,6 +76,7 @@ struct proc {
   int threads_created;
   struct k_thread_counter *k_threads;
   struct k_thread_join *join_facility;
+  int ctime, etime, rtime, lasttime;
 };
 
 /* A&T for kernel threads */

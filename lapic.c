@@ -52,19 +52,19 @@ lapicw(int index, int value)
 void
 lapicinit(int c)
 {
-  if(!lapic) 
+  if(!lapic)
     return;
 
   // Enable local APIC; set spurious interrupt vector.
   lapicw(SVR, ENABLE | (T_IRQ0 + IRQ_SPURIOUS));
 
   // The timer repeatedly counts down at bus frequency
-  // from lapic[TICR] and then issues an interrupt.  
+  // from lapic[TICR] and then issues an interrupt.
   // If xv6 cared more about precise timekeeping,
   // TICR would be calibrated using an external time source.
   lapicw(TDCR, X1);
   lapicw(TIMER, PERIODIC | (T_IRQ0 + IRQ_TIMER));
-  lapicw(TICR, 10000000); 
+  lapicw(TICR, 10000000);
 
   // Disable logical interrupt lines.
   lapicw(LINT0, MASKED);
@@ -139,7 +139,7 @@ lapicstartap(uchar apicid, uint addr)
 {
   int i;
   ushort *wrv;
-  
+
   // "The BSP must initialize CMOS shutdown code to 0AH
   // and the warm reset vector (DWORD based at 40:67) to point at
   // the AP startup code prior to the [universal startup algorithm]."
@@ -156,7 +156,7 @@ lapicstartap(uchar apicid, uint addr)
   microdelay(200);
   lapicw(ICRLO, INIT | LEVEL);
   microdelay(100);    // should be 10ms, but too slow in Bochs!
-  
+
   // Send startup IPI (twice!) to enter code.
   // Regular hardware is supposed to only accept a STARTUP
   // when it is in the halted state due to an INIT.  So the second
@@ -169,4 +169,7 @@ lapicstartap(uchar apicid, uint addr)
   }
 }
 
-
+/* A&T get current time */
+ int gettime() {
+     return lapic[TCCR];
+ }
