@@ -1,21 +1,12 @@
-#include "param.h"
 #include "types.h"
-#include "stat.h"
 #include "user.h"
-#include "fs.h"
-#include "fcntl.h"
-#include "syscall.h"
-#include "traps.h"
-#include "memlayout.h"
 
-
-int*
-getConfigValues(void)
+void getConfigValues(int val_array[6])
 {
     int fd;
-    int *val_array = malloc(sizeof(int)*6);
-    char val[10];
-    int n;
+    char val[100];
+    char *buf;
+    int n,i,j;
 
     // printf(stdout, "open test\n");
     fd = open("ass2_conf.txt", 0);
@@ -23,23 +14,22 @@ getConfigValues(void)
         printf(2, "open ass2_conf.txt  failed!\n");
         exit();
     }
-    for(n=0; n < 6;n++) {
-        memset(val,0,10);
-        read(fd,val,10);
-        val_array[n]=atoi(val);
-
-        printf(2,"s=%s    d=%d\n",val_array[n],val);
+    n = read(fd,val,100);
+    //    printf(2,"%s\n",val);
+    i=0;
+    buf=val;
+    val_array[0]=atoi(buf);
+    j=1;
+    while (i < n){
+        if (val[i] == '\n') {
+            val_array[j]=atoi(buf+1);
+            j++;
+        }
+        i++;
+        buf++;
+        if (j == 6)
+            break;
     }
+
     close(fd);
-    return val_array;
-}
-
-
-int main() {
-    int *a;
-
-    a=getConfigValues();
-    printf(2,"%d %d %d %d %d %d",a[0],a[1],a[2],a[3],a[4],a[5]);
-
-    return 0;
 }
