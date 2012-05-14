@@ -166,7 +166,7 @@ UPROGS=\
 	_wc\
 	_zombie\
 	_uthread_sanity\
-	_configfile\
+	_ut_eat\
 
 
 fs.img: mkfs README $(UPROGS)
