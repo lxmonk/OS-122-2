@@ -28,7 +28,7 @@ pinit(void)
 
 
 typedef struct k_thread_join {
-    struct spinlock wait_lock;
+    int waiter;
     struct spinlock join_lock;
     int taken;
 } k_thread_join;
@@ -63,7 +63,7 @@ found:
       return 0;
   }
 
-  /* A&T create the k_thread_join facility */
+  /************************** A&T create the k_thread_join facility */
   if ((p->join_facility = ((void*) kalloc())) == 0) {
       kfree(p->kstack);
       p->state = UNUSED;
@@ -71,8 +71,10 @@ found:
   }
 
   ((k_thread_join*)(p->join_facility))->taken = 0;
+  ((k_thread_join*)(p->join_facility))->waiter = -1; /* no one yet */
 
-  /* A&T end */
+
+  /************************** A&T end ******************** */
   sp = p->kstack + KSTACKSIZE;
 
   // Leave room for trap frame.
@@ -586,7 +588,8 @@ void proc_kthread_exit() {
     try = try_lock(&(proc->join_facility->join_lock)); /* if no one is there -
                                                           no one will get in. */
     if (try != 0)		/* someone is waiting */
-        release(&proc->join_facility->wait_lock);
+        kthread_UNblock(proc->join_facility->waiter);
+        /* release(&proc->join_facility->wait_lock); */
     else
         popcli();               /* never releasing join_lock */
 
@@ -610,7 +613,8 @@ int proc_kthread_join(int thread_id) {
     if (try != 0)
         return -1;		/* someone already following him (or
                                    he's killing himself..) */
-    acquire(&(p->join_facility->wait_lock));
+    p->join_facility->waiter = get_id();
+    kthread_block(get_id());
     popcli();			/* to correct join_lock not being released */
     return 0;			/* NOT RELEASING join_lock! */
 }
