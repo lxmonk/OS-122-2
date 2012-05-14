@@ -120,10 +120,12 @@ void student_func() {
         uthread_yield();
     food[id % 3]--;
     long_eating_process();
+    uthread_setpr(8); // update priority after eating
     while (food[(id+1) % 3] == 0)
         uthread_yield();
     food[(id+1) % 3]--;
     long_eating_process();
+    uthread_setpr(7); // update priority after eating
     while (food[(id+2) % 3] == 0)
         uthread_yield();
     food[(id+2) % 3]--;
@@ -145,7 +147,7 @@ void host_func() {
     uthread_exit();
 }
 int main() {
-
+    int i;
 
     getConfigValues(init);
     food[SALAD]=init[SALAD_BUFFER_SIZE];
@@ -154,6 +156,14 @@ int main() {
     empty_seats = 0;
     waiting_studens = init[STUDENTS_JOINING];
 
+    for(i = 0; i < init[STUDENTS_INITIAL];i++) {
+        uthread_create(student_func,9);
+    }
+    uthread_create(host_func,5);
+    uthread_create(salad_waiter_func,5);
+    uthread_create(pasta_waiter_func,5);
+    uthread_create(steak_waiter_func,5);
 
+    uthread_start_all();
     return 0;
 }

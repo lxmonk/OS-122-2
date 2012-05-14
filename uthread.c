@@ -143,7 +143,6 @@ uthread_t uthread_self() {
 }
 static uthread_t *s_self;
 static uthread_t *s_next;
-
 void uthread_yield() {
 
     /* save_esp */
