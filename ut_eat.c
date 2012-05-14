@@ -2,7 +2,7 @@
 #include "user.h"
 #include "uthread.h"
 
-
+#define T_A_DEBUG 0
 
 #define STUDENTS_INITIAL 0
 #define STUDENTS_JOINING 1
@@ -56,7 +56,8 @@ void getConfigValues(int val_array[6])
 }
 
 // simulates a long eating
-void long_eating_process() {
+ void long_eating_process() {
+    DEBUG_PRINT(1,"inside",1);
     int i,j,t,k;
 
     for(i=1;i < 100000;i++) {
@@ -69,7 +70,8 @@ void long_eating_process() {
 }
 
 //simulates a short eating
-void short_eating_process() {
+ void short_eating_process() {
+     DEBUG_PRINT(1,"inside",1);
     int i,j,t,k;
 
      for(i=1;i < 1000;i++) {
@@ -82,8 +84,8 @@ void short_eating_process() {
 }
 
 //the waiter in-charge of the salad buffer
-void salad_waiter_func()
-{
+void salad_waiter_func(){
+    DEBUG_PRINT(1,"inside",1);
     while (empty_seats  < init[NUM_OF_SEATS]) {
         if (food[SALAD] < init[SALAD_BUFFER_SIZE]) {
             food[SALAD]++;
@@ -98,6 +100,7 @@ void salad_waiter_func()
 //the waiter in-charge of the pasta buffer
 void pasta_waiter_func()
 {
+    DEBUG_PRINT(1,"inside",1);
     while (empty_seats  < init[NUM_OF_SEATS]) {
         if (food[PASTA] < init[PASTA_BUFFER_SIZE]) {
             food[PASTA]++;
@@ -110,8 +113,8 @@ void pasta_waiter_func()
 }
 
 //the waiter in-charge of the steak buffer
-void steak_waiter_func()
-{
+void steak_waiter_func() {
+    DEBUG_PRINT(1,"inside",1);
     while (empty_seats  < init[NUM_OF_SEATS]) {
         if (food[STEAK] < init[STEAK_BUFFER_SIZE]) {
             food[STEAK]++;
@@ -125,6 +128,7 @@ void steak_waiter_func()
 
 //the eating student function
 void student_func() {
+    DEBUG_PRINT(1,"inside",1);
     int id=stud_id++;
     printf(2,"Student %d joined the table\n",id);
     uthread_yield();
@@ -159,12 +163,14 @@ void student_func() {
 
 //the host, adds waiting students to the table
 void host_func() {
+    DEBUG_PRINT(1,"inside",1);
     while (waiting_studens > 0) {
         if (empty_seats > 0) {
             empty_seats--;
             waiting_studens--;
             uthread_create(student_func,9);
         }
+        uthread_yield();
     }
     uthread_exit();
 }
@@ -180,13 +186,18 @@ int main() {
         (init[NUM_OF_SEATS]-init[STUDENTS_INITIAL]);
     stud_id=0;
 
+    uthread_create(host_func,9);
+    DEBUG_PRINT(1,"created host",1);
+    uthread_create(salad_waiter_func,9);
+    DEBUG_PRINT(1,"created salad water",1);
+    uthread_create(pasta_waiter_func,9);
+    DEBUG_PRINT(1,"created pasta water",1);
+    uthread_create(steak_waiter_func,9);
+    DEBUG_PRINT(1,"created steak water",1);
     for(i = 0; i < init[NUM_OF_SEATS];i++) {
         uthread_create(student_func,9);
+        DEBUG_PRINT(1,"created student thread %d",i);
     }
-    uthread_create(host_func,5);
-    uthread_create(salad_waiter_func,5);
-    uthread_create(pasta_waiter_func,5);
-    uthread_create(steak_waiter_func,5);
 
     uthread_start_all();
     return 0;
