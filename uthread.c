@@ -3,7 +3,7 @@
 #include "fcntl.h"
 #include "uthread.h"
 
-//#define SCHED_PB  change scheduling policies
+#define SCHED_PB  change scheduling policies
 
 #define T_A_DEBUG 0
 
