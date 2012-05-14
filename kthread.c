@@ -9,10 +9,20 @@
 
 #include "kthread.h"
 
+static struct spinlock array_lock;
+static kthread_mutex_t mutex_array[MAX_MUTEXES];
+static int mutex_used[MAX_MUTEXES];
+static volatile int first_mutex = 1;
+
+static kthread_cond_t cv_arrary[MAX_CONDS];
+static volatile int cv_init = 0;
+static struct spinlock cvs_lock;
+static int cvs_used[MAX_CONDS];
+
 
 int
 kthread_create(void*(*start_func)(), void* stack, uint stack_size) {
-    return fork_kthread(start_func, stack);
+    return fork_kthread(start_func, (stack + stack_size));
 }
 
 int kthread_id() {
