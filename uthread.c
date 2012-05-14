@@ -3,7 +3,7 @@
 #include "fcntl.h"
 #include "uthread.h"
 
-//#define SCHED_PB  change scheduling policies
+#define SCHED_PB  change scheduling policies
 
 #define T_A_DEBUG 0
 
@@ -143,7 +143,6 @@ uthread_t uthread_self() {
 }
 static uthread_t *s_self;
 static uthread_t *s_next;
-
 void uthread_yield() {
 
     /* save_esp */
