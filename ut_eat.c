@@ -18,6 +18,7 @@ static int init[6]; //the init config values
 static int food[3]; //the salad,pasta and steak buffers
 static int empty_seats;
 static int waiting_studens;
+static int stud_id;
 
 
 // gets the values from the config file
@@ -83,9 +84,12 @@ void short_eating_process() {
 //the waiter in-charge of the salad buffer
 void salad_waiter_func()
 {
-    while (empty_seats  < init[STUDENTS_INITIAL]) {
-        if (food[SALAD] < init[SALAD_BUFFER_SIZE])
+    while (empty_seats  < init[NUM_OF_SEATS]) {
+        if (food[SALAD] < init[SALAD_BUFFER_SIZE]) {
             food[SALAD]++;
+            printf(2,"Waiter 0 increased his buffer to %d/%d\n",
+                   food[SALAD],init[SALAD_BUFFER_SIZE]);
+        }
         uthread_yield();
     }
     uthread_exit();
@@ -94,9 +98,12 @@ void salad_waiter_func()
 //the waiter in-charge of the pasta buffer
 void pasta_waiter_func()
 {
-    while (empty_seats  < init[STUDENTS_INITIAL]) {
-        if (food[PASTA] < init[PASTA_BUFFER_SIZE])
+    while (empty_seats  < init[NUM_OF_SEATS]) {
+        if (food[PASTA] < init[PASTA_BUFFER_SIZE]) {
             food[PASTA]++;
+            printf(2,"Waiter 1 increased his buffer to %d/%d\n",
+                   food[PASTA],init[PASTA_BUFFER_SIZE]);
+        }
         uthread_yield();
     }
     uthread_exit();
@@ -105,9 +112,12 @@ void pasta_waiter_func()
 //the waiter in-charge of the steak buffer
 void steak_waiter_func()
 {
-    while (empty_seats  < init[STUDENTS_INITIAL]) {
-        if (food[STEAK] < init[STEAK_BUFFER_SIZE])
+    while (empty_seats  < init[NUM_OF_SEATS]) {
+        if (food[STEAK] < init[STEAK_BUFFER_SIZE]) {
             food[STEAK]++;
+            printf(2,"Waiter 2 increased his buffer to %d/%d\n",
+                   food[STEAK],init[STEAK_BUFFER_SIZE]);
+        }
         uthread_yield();
     }
     uthread_exit();
@@ -115,30 +125,42 @@ void steak_waiter_func()
 
 //the eating student function
 void student_func() {
-    int id=uthread_self().tid;
-    while (food[id % 3] == 0)
+    int id=stud_id++;
+    printf(2,"Student %d joined the table\n",id);
+    uthread_yield();
+    while (food[id % 3] == 0){
+        printf(2,"Student %d waits for %d\n",id,id%3);
         uthread_yield();
+    }
     food[id % 3]--;
+    printf(2,"Student %d acquired %d\n",id,id%3);
     long_eating_process();
     uthread_setpr(8); // update priority after eating
-    while (food[(id+1) % 3] == 0)
+    while (food[(id+1) % 3] == 0) {
+        printf(2,"Student %d waits for %d\n",id,(id+1)%3);
         uthread_yield();
+    }
     food[(id+1) % 3]--;
+    printf(2,"Student %d acquired %d\n",id,(id+1)%3);
     long_eating_process();
     uthread_setpr(7); // update priority after eating
-    while (food[(id+2) % 3] == 0)
+    while (food[(id+2) % 3] == 0) {
+        printf(2,"Student %d waits for %d\n",id,(id+2)%3);
         uthread_yield();
+    }
+    printf(2,"Student %d acquired %d\n",id,(id+2)%3);
     food[(id+2) % 3]--;
     short_eating_process();
 
+    printf(2,"Student %d left the table\n",id);
     empty_seats++;
     uthread_exit();
 }
 
 //the host, adds waiting students to the table
 void host_func() {
-    while (empty_seats  < init[STUDENTS_INITIAL]) {
-        if ((empty_seats > 0) && (waiting_studens > 0)) {
+    while (waiting_studens > 0) {
+        if (empty_seats > 0) {
             empty_seats--;
             waiting_studens--;
             uthread_create(student_func,9);
@@ -154,9 +176,11 @@ int main() {
     food[PASTA]=init[PASTA_BUFFER_SIZE];
     food[STEAK]=init[STEAK_BUFFER_SIZE];
     empty_seats = 0;
-    waiting_studens = init[STUDENTS_JOINING];
+    waiting_studens = init[STUDENTS_JOINING] +
+        (init[NUM_OF_SEATS]-init[STUDENTS_INITIAL]);
+    stud_id=0;
 
-    for(i = 0; i < init[STUDENTS_INITIAL];i++) {
+    for(i = 0; i < init[NUM_OF_SEATS];i++) {
         uthread_create(student_func,9);
     }
     uthread_create(host_func,5);
