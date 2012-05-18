@@ -6,8 +6,9 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
-
 #include "kthread.h"
+
+#define T_A_DEBUG 0
 
 #define MAX_STUDS 2000
 #define LONG_EAT 100000
@@ -19,6 +20,10 @@
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define max(a, b) ((a) > (b) ? (a) : (b))
+
+/* +++++++++++++++++++++++++++++++++++++++++++++ */
+
+/* +++++++++++++++++++++++++++++++++++++++++++++ */
 
 
 static int host_mutex;
@@ -32,6 +37,8 @@ static int alloced_elts[8 + 4 + MAX_STUDS];
 static volatile int sim_on;
 static int dishes[3], cvs[3];
 static int foods[3];
+
+
 int dealloc_ret(int allocated, int alloced_elts[]) {
 
     while(allocated > 12)    /* loop over all created students */
@@ -85,6 +92,7 @@ void sit_student() {
     }
     waiting_students--;
     seating_students++;
+    cprintf("Student%d joined the table\n", i-4);
 }
 void* host_func() {
     while(waiting_students > 0) {
@@ -105,15 +113,24 @@ void* host_func() {
     kthread_join(pasta_waiter);
     kthread_join(steak_waiter);
     dealloc_ret(allocated, alloced_elts); /* free resources. */
+    sim_on = -1;
     kthread_exit();
     return (void*)0;		/* never reached.. */
 }
+
+void waiter_print(waiterno, quant_now, buf_size) {
+    cprintf("Waiter%d increased his buffer to %d/%d\n", waiterno,
+            quant_now, buf_size);
+}
+
 void* salad_func() {
     while (sim_on != 0){
         kthread_mutex_lock(dishes[SALAD]);
         if (foods[SALAD] < salad_buf_size) {
             foods[SALAD]++;
+            waiter_print(SALAD, foods[SALAD], salad_buf_size);
         }
+        kthread_cond_signal(cvs[SALAD]); /* can't harm' */
         kthread_mutex_unlock(dishes[SALAD]);
     }
     kthread_exit();
@@ -125,6 +142,7 @@ void* pasta_func() {
         if (foods[PASTA]< pasta_buf_size) {
             foods[PASTA]++;
         }
+        kthread_cond_signal(cvs[PASTA]); /* can't harm' */
         kthread_mutex_unlock(dishes[PASTA]);
     }
     kthread_exit();
@@ -137,7 +155,8 @@ void* steak_func() {
         if (foods[STEAK] < steak_buf_size) {
             foods[STEAK]++;
         }
-        kthread_mutex_unlock(dishes[PASTA]);
+        kthread_cond_signal(cvs[STEAK]); /* can't harm' */
+        kthread_mutex_unlock(dishes[STEAK]);
     }
     kthread_exit();
     return (void*)0;		/* never reached */
@@ -162,7 +181,7 @@ void* eating_sudent_func() {
     int stud_id;
     int dish;
 
-    stud_id = kthread_id();
+    stud_id = i - 4;
     dish = stud_id % 3;
     kthread_mutex_lock(dishes[dish]);
     /* get 1st dish */
@@ -170,10 +189,12 @@ void* eating_sudent_func() {
     if (foods[dish] > 0)
         foods[dish]--;
     else {
+        cprintf("Student%d waits for %d\n", stud_id, dish);
         kthread_cond_wait(cvs[dish], dishes[dish]);
         goto d1;
     }
     kthread_mutex_unlock(dishes[dish]);
+    cprintf("Student%d acquired %d\n", stud_id, dish);
 
     /* get 2nd dish */
     dish = (stud_id + 1) % 3;
@@ -182,11 +203,14 @@ void* eating_sudent_func() {
     if (foods[dish] > 0)
         foods[dish]--;
     else {
+        cprintf("Student%d waits for %d\n", stud_id, dish);
         kthread_cond_wait(cvs[dish], dishes[dish]);
         goto d2;
     }
     kthread_mutex_unlock(dishes[dish]);
+    cprintf("Student%d acquired %d\n", stud_id, dish);
 
+    cprintf("Student%d started long eating process\n", stud_id);
     eat_proc(LONG_EAT);
 
     /* get 3rd dish */
@@ -196,16 +220,20 @@ void* eating_sudent_func() {
     if (foods[dish] > 0)
         foods[dish]--;
     else {
+        cprintf("Student%d waits for %d\n", stud_id, dish);
         kthread_cond_wait(cvs[dish], dishes[dish]);
         goto d3;
     }
     kthread_mutex_unlock(dishes[dish]);
+    cprintf("Student%d acquired %d\n", stud_id, dish);
+
+    cprintf("Student%d started short eating process\n", stud_id);
     eat_proc(SHORT_EAT);
 
     kthread_mutex_lock(host_mutex);
     seating_students--;		/* get up and leave */
     kthread_mutex_unlock(host_mutex);
-
+    cprintf("Student%d left the table\n", stud_id);
     update_stats();
     kthread_exit();
     return (void*)0;
@@ -214,23 +242,24 @@ void* eating_sudent_func() {
 void print_stats() {}
 
 
-int sim_init(int stud_initial, int stud_joining, int seats_num,
-             int _salad_buf_size, int _pasta_buf_size,
-             int _steak_buf_size) {
+int sim_init(int init[]) {
 
-    void* stacks[seats_num + 4];
+    void* stacks[init[2] + 4];	/* chair_num + 4 staff */
     int stud_to_be_seated, host_tid;
-    int salad_mutex, pasta_mutex, steak_mutex;
+    int salad_mutex, pasta_mutex, steak_mutex, stud_initial;
 
+    cprintf("klt simulation starting.\n");
+
+    stud_initial = init[0];
 
     /* update static vars  */
-    chair_num = seats_num;
+    chair_num = init[2];
     seating_students = 0;
-    waiting_students = max((stud_initial - seats_num), 0) + stud_joining;
+    waiting_students = max((init[0] - chair_num), 0) + init[1];
     allocated = 0;
-    salad_buf_size = _salad_buf_size;
-    pasta_buf_size = _pasta_buf_size;
-    steak_buf_size = _steak_buf_size;
+    salad_buf_size = init[3];
+    pasta_buf_size = init[4];
+    steak_buf_size = init[5];
     foods[SALAD] = salad_buf_size;
     foods[PASTA] = pasta_buf_size;
     foods[STEAK] = steak_buf_size;
@@ -281,6 +310,7 @@ int sim_init(int stud_initial, int stud_joining, int seats_num,
                                    MAX_STACK_SIZE)) < 0)
         return dealloc_ret(allocated, alloced_elts);
 
+    K_DEBUG_PRINT(3, "host_tid=%d", host_tid);
     /* create the waiters: */
     /* SALAD */
     if ((stacks[i] = kalloc()) == 0)
@@ -310,7 +340,7 @@ int sim_init(int stud_initial, int stud_joining, int seats_num,
         return dealloc_ret(allocated, alloced_elts);
 
     /* the '+ 4' is for the waiters and the host */
-    stud_to_be_seated = (min((seats_num), (stud_initial))) + 4;
+    stud_to_be_seated = (min((chair_num), (stud_initial))) + 4;
     /* create the sitting students */
     while (i < stud_to_be_seated) {
         if ((stacks[i] = kalloc()) == 0)
@@ -324,11 +354,32 @@ int sim_init(int stud_initial, int stud_joining, int seats_num,
     }
 
     sim_on = 1;
+    yield();
+
+    print_stats();
+    while (sim_on != -1)
+        yield();
 
     if (kthread_join(host_tid) < 0)
         return dealloc_ret(allocated, alloced_elts);
 
-    print_stats();
+    K_DEBUG_PRINT(1,"exiting.", 0);
     kthread_exit();
     return 0;			/* never reached. */
+}
+
+int sim_start() {
+    int man_init[6] = {1,0,1,4,4,4};
+    char* msg = "klt auto starting\n";
+
+    cprintf(msg);
+    return sim_init(man_init);
+
+}
+
+/* A&T start simulation */
+int sys_kltsim(void) {
+
+    /* return 0; */
+    return sim_start();
 }

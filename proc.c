@@ -7,6 +7,13 @@
 #include "proc.h"
 #include "spinlock.h"
 
+
+/* ******************** A&T FIXME  *********************/
+#define AUTON
+#define T_A_DEBUG 0
+/* ******************** A&T end ************************/
+
+
 struct {
   struct spinlock lock;
   struct proc proc[NPROC];
@@ -64,14 +71,20 @@ found:
   }
 
   /************************** A&T create the k_thread_join facility */
+  K_DEBUG_PRINT(3, "p=%x, p->join_facility=%x", p, p->join_facility);
+
   if ((p->join_facility = ((void*) kalloc())) == 0) {
       kfree(p->kstack);
       p->state = UNUSED;
       return 0;
   }
+  K_DEBUG_PRINT(3, "p=%x, p->join_facility=%x", p, p->join_facility);
 
   ((k_thread_join*)(p->join_facility))->taken = 0;
   ((k_thread_join*)(p->join_facility))->waiter = -1; /* no one yet */
+  K_DEBUG_PRINT(3, "p->join_facility->taken=%d, "
+                "p->join_facility->waiter=%d",p->join_facility->taken,
+                p->join_facility->waiter);
 
 
   /************************** A&T end ******************** */
@@ -92,7 +105,7 @@ found:
   p->context->eip = (uint)forkret;
 
   /* A&T initialize */
-  p->threads_created = 1;
+  p->threads_created = 0;
   p->ctime = gettime();		/* creation time */
   p->etime = 0;			/* ????????? */
   p->rtime = 0;
@@ -360,7 +373,10 @@ register_handler(sighandler_t sighandler)
 void
 scheduler(void)
 {
-  struct proc *p;
+    struct proc *p;
+    /******************************* A&T hack ************************/
+    int started = 0;
+
 
   for(;;){
     // Enable interrupts on this processor.
@@ -394,6 +410,13 @@ scheduler(void)
       proc = 0;
     }
     release(&ptable.lock);
+
+    /******************************* A&T hack ************************/
+    if (! started) {
+        started = 1;
+    /*     sim_start(); */
+    }
+    /******************************* A&T end *************************/
 
   }
 }
@@ -443,6 +466,7 @@ forkret(void)
     // be run from main().
     first = 0;
     initlog();
+    K_DEBUG_PRINT(2, "after initlog", 100);
   }
 
   // Return to "caller", actually trapret (see allocproc).

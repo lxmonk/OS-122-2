@@ -168,6 +168,7 @@ UPROGS=\
 	_zombie\
 	_uthread_sanity\
 	_ut_eat\
+	_ukltsim\
 
 
 fs.img: mkfs README $(UPROGS)
