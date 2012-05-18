@@ -22,6 +22,7 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
+int kltsim(int params[]);
 
 // ulib.c
 int stat(char*, struct stat*);
@@ -36,6 +37,10 @@ void* memset(void*, int, uint);
 void* malloc(uint);
 void free(void*);
 int atoi(const char*);
+
+
+/* A&T */
+int sim_init(int parameters[]);
 
 #define DEBUG_PRINT(level, fmt, ...)					\
     do { if (T_A_DEBUG >= level) printf(2, "<%s>:%d:[%s()]: " fmt "\n", \

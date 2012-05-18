@@ -1,6 +1,7 @@
 #include "types.h"
 #include "user.h"
 #include "uthread.h"
+#include "fcntl.h"
 
 #define T_A_DEBUG 0
 
@@ -19,6 +20,7 @@ static int food[3]; //the salad,pasta and steak buffers
 static int empty_seats;
 static int waiting_studens;
 static int stud_id;
+static int logFile;
 
 
 // gets the values from the config file
@@ -56,25 +58,27 @@ void getConfigValues(int val_array[6])
 }
 
 // simulates a long eating
- void long_eating_process() {
+ void long_eating_process(int id) {
     DEBUG_PRINT(2,"inside",1);
     int i,j,t,k;
-
-    for(i=1;i < 1000;i++) {
-        DEBUG_PRINT(6,"long eat - iter %d",i);
-         for(j=1; j <  1000;j++) {
-             t = 1;
-             for(k=1;k < 20;k++)
-                 t *= k;
-         }
+    printf(logFile,"Student %d  started long eating process\n",id);
+    for(i=1;i < 100000;i++) {
+        if (i % 1000 == 0)
+            DEBUG_PRINT(6,"long eat - iter %d",i);
+        for(j=1; j <  1000;j++) {
+            t = 1;
+            for(k=1;k < 20;k++)
+                t *= k;
+        }
     }
 }
 
 //simulates a short eating
- void short_eating_process() {
+ void short_eating_process(int id) {
      DEBUG_PRINT(2,"inside",1);
-    int i,j,t,k;
+     int i,j,t,k;
 
+    printf(logFile,"Student %d  started short eating process\n",id);
      for(i=1;i < 1000;i++) {
          for(j=1; j <  1000;j++) {
              t = 1;
@@ -90,7 +94,7 @@ void salad_waiter_func(){
     while (empty_seats  < init[NUM_OF_SEATS]) {
         if (food[SALAD] < init[SALAD_BUFFER_SIZE]) {
             food[SALAD]++;
-            printf(2,"Waiter 0 increased his buffer to %d/%d\n",
+            printf(logFile,"Waiter 0 increased his buffer to %d/%d\n",
                    food[SALAD],init[SALAD_BUFFER_SIZE]);
         }
         uthread_yield();
@@ -105,7 +109,7 @@ void pasta_waiter_func()
     while (empty_seats  < init[NUM_OF_SEATS]) {
         if (food[PASTA] < init[PASTA_BUFFER_SIZE]) {
             food[PASTA]++;
-            printf(2,"Waiter 1 increased his buffer to %d/%d\n",
+            printf(logFile,"Waiter 1 increased his buffer to %d/%d\n",
                    food[PASTA],init[PASTA_BUFFER_SIZE]);
         }
         uthread_yield();
@@ -119,7 +123,7 @@ void steak_waiter_func() {
     while (empty_seats  < init[NUM_OF_SEATS]) {
         if (food[STEAK] < init[STEAK_BUFFER_SIZE]) {
             food[STEAK]++;
-            printf(2,"Waiter 2 increased his buffer to %d/%d\n",
+            printf(logFile,"Waiter 2 increased his buffer to %d/%d\n",
                    food[STEAK],init[STEAK_BUFFER_SIZE]);
         }
         uthread_yield();
@@ -131,33 +135,32 @@ void steak_waiter_func() {
 void student_func() {
     DEBUG_PRINT(1,"inside",1);
     int id=stud_id++;
-    printf(2,"Student %d joined the table\n",id);
+    printf(logFile,"Student %d joined the table\n",id);
     uthread_yield();
     while (food[id % 3] == 0){
-        printf(2,"Student %d waits for %d\n",id,id%3);
+        printf(logFile,"Student %d waits for %d\n",id,id%3);
         uthread_yield();
     }
     food[id % 3]--;
-    printf(2,"Student %d acquired %d\n",id,id%3);
-    long_eating_process();
+    printf(logFile,"Student %d acquired %d\n",id,id%3);
     //    uthread_setpr(8); // update priority after eating
     while (food[(id+1) % 3] == 0) {
-        printf(2,"Student %d waits for %d\n",id,(id+1)%3);
+        printf(logFile,"Student %d waits for %d\n",id,(id+1)%3);
         uthread_yield();
     }
     food[(id+1) % 3]--;
-    printf(2,"Student %d acquired %d\n",id,(id+1)%3);
-    long_eating_process();
+    printf(logFile,"Student %d acquired %d\n",id,(id+1)%3);
+    long_eating_process(id);
     //    uthread_setpr(7); // update priority after eating
     while (food[(id+2) % 3] == 0) {
-        printf(2,"Student %d waits for %d\n",id,(id+2)%3);
+        printf(logFile,"Student %d waits for %d\n",id,(id+2)%3);
         uthread_yield();
     }
-    printf(2,"Student %d acquired %d\n",id,(id+2)%3);
+    printf(logFile,"Student %d acquired %d\n",id,(id+2)%3);
     food[(id+2) % 3]--;
-    short_eating_process();
+    short_eating_process(id);
 
-    printf(2,"Student %d left the table\n",id);
+    printf(logFile,"Student %d left the table\n",id);
     empty_seats++;
     uthread_exit();
 }
@@ -180,6 +183,13 @@ void host_func() {
 int main() {
     int i;
 
+    logFile = open("ass2_log.txt", O_CREATE|O_RDWR);
+    if(logFile < 0){
+        printf(2, "open ass2_log.txt  failed!\n");
+        exit();
+    }
+
+    logFile = 2;
     getConfigValues(init);
     food[SALAD]=init[SALAD_BUFFER_SIZE];
     food[PASTA]=init[PASTA_BUFFER_SIZE];

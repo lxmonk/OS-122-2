@@ -29,3 +29,7 @@ SYSCALL(getpid)
 SYSCALL(sbrk)
 SYSCALL(sleep)
 SYSCALL(uptime)
+
+## A&T
+SYSCALL(simstat)
+SYSCALL(kltsim)
