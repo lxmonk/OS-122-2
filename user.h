@@ -42,6 +42,25 @@ int atoi(const char*);
 /* A&T */
 int sim_init(int parameters[]);
 
+/* A&T kthread.c */
+int kthread_create(void*(*start_func)(), void* stack,
+                   uint stack_size);
+int kthread_id();
+void kthread_exit();
+int kthread_join( int thread_id );
+
+int kthread_mutex_alloc();
+int kthread_mutex_dealloc( int mutex_id );
+int kthread_mutex_lock( int mutex_id );
+int kthread_mutex_unlock( int mutex_id );
+
+int kthread_cond_alloc();
+int kthread_cond_dealloc( int cond_id );
+int kthread_cond_wait( int cond_id, int mutex_id );
+int kthread_cond_signal( int cond_id );
+
+void* kthread_get_ustack();
+
 #define DEBUG_PRINT(level, fmt, ...)					\
     do { if (T_A_DEBUG >= level) printf(2, "<%s>:%d:[%s()]: " fmt "\n", \
                                __FILE__, __LINE__, __func__,		\

@@ -100,6 +100,20 @@ extern int sys_write(void);
 extern int sys_uptime(void);
 /* extern int sys_simstat(void); */
 extern int sys_kltsim(void);
+extern int sys_kthread_create(void);
+extern int sys_kthread_id(void);
+extern int sys_kthread_exit(void);
+extern int sys_kthread_join();
+extern int sys_kthread_mutex_alloc();
+extern int sys_kthread_mutex_dealloc();
+extern int sys_kthread_mutex_lock();
+extern int sys_kthread_mutex_unlock();
+extern int sys_kthread_cond_alloc();
+extern int sys_kthread_cond_dealloc();
+extern int sys_kthread_cond_wait();
+extern int sys_kthread_cond_signal();
+extern int sys_kthread_get_ustack();
+extern int sys_kthread_yield();
 
 
 
@@ -125,8 +139,22 @@ static int (*syscalls[])(void) = {
 [SYS_link]    sys_link,
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
-[SYS_simstat] sys_kltsim, /* sys_simstat, */
-[SYS_kltsim]     sys_kltsim,
+/* [SYS_simstat] sys_kltsim, /\* sys_simstat, *\/ */
+/* [SYS_kltsim]     sys_kltsim, */
+[SYS_kthread_create]    sys_kthread_create,
+[SYS_kthread_id] sys_kthread_id,
+[SYS_kthread_exit] sys_kthread_exit,
+[SYS_kthread_join] sys_kthread_join,
+[SYS_kthread_mutex_alloc] sys_kthread_mutex_alloc,
+[SYS_kthread_mutex_dealloc] sys_kthread_mutex_dealloc,
+[SYS_kthread_mutex_lock] sys_kthread_mutex_lock,
+[SYS_kthread_mutex_unlock] sys_kthread_mutex_unlock,
+[SYS_kthread_cond_alloc] sys_kthread_cond_alloc,
+[SYS_kthread_cond_dealloc] sys_kthread_cond_dealloc,
+[SYS_kthread_cond_wait] sys_kthread_cond_wait,
+[SYS_kthread_cond_signal] sys_kthread_cond_signal,
+[SYS_kthread_get_ustack] sys_kthread_get_ustack,
+[SYS_kthread_yield] sys_kthread_yield,
 };
 
 void

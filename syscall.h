@@ -26,3 +26,17 @@
 /* A&T */
 #define SYS_simstat 22
 #define SYS_kltsim 23
+#define SYS_kthread_create 24
+#define SYS_kthread_id 25
+#define SYS_kthread_exit 26
+#define SYS_kthread_join 27
+#define SYS_kthread_mutex_alloc 28
+#define SYS_kthread_mutex_dealloc 29
+#define SYS_kthread_mutex_lock 30
+#define SYS_kthread_mutex_unlock 31
+#define SYS_kthread_cond_alloc 32
+#define SYS_kthread_cond_dealloc 33
+#define SYS_kthread_cond_wait 34
+#define SYS_kthread_cond_signal 35
+#define SYS_kthread_get_ustack 36
+#define SYS_kthread_yield 37

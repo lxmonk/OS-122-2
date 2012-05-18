@@ -28,7 +28,6 @@ OBJS = \
 	vectors.o\
 	vm.o\
 	kthread.o\
-	kltsim.o\
 
 # Cross-compiling (e.g., on Mac OS X)
 #TOOLPREFIX = i386-jos-elf-
@@ -169,6 +168,8 @@ UPROGS=\
 	_uthread_sanity\
 	_ut_eat\
 	_ukltsim\
+	_kltsim\
+
 
 
 fs.img: mkfs README $(UPROGS)

@@ -1,12 +1,14 @@
 #include "types.h"
-#include "defs.h"
-#include "param.h"
-#include "memlayout.h"
-#include "mmu.h"
-#include "x86.h"
-#include "proc.h"
-#include "spinlock.h"
-#include "kthread.h"
+/* #include "defs.h" */
+/* #include "param.h" */
+/* #include "memlayout.h" */
+/* #include "mmu.h" */
+/* #include "x86.h" */
+/* #include "proc.h" */
+/* #include "spinlock.h" */
+/* #include "kthread.h" */
+
+#include "user.h"
 
 #define T_A_DEBUG 0
 
@@ -18,6 +20,8 @@
 #define PASTA 1
 #define STEAK 2
 
+#define MAX_STACK_SIZE 4000
+
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define max(a, b) ((a) > (b) ? (a) : (b))
 
@@ -25,6 +29,7 @@
 
 /* +++++++++++++++++++++++++++++++++++++++++++++ */
 
+void yield() {}
 
 static int host_mutex, id_mutex;
 static int host_cv, salad_cv, pasta_cv, steak_cv;
@@ -46,17 +51,17 @@ static int global_stud_id;
 int dealloc_ret(int allocated, int alloced_elts[]) {
 
     while(allocated > 12)    /* loop over all created students */
-        kfree((void*)alloced_elts[allocated--]);
+        free((void*)alloced_elts[allocated--]);
 
     switch(allocated) {	/* no 'break;;' on purpose! */
     case 12:			/* steak waiter stack */
-        kfree((void*)alloced_elts[allocated--]);
+        free((void*)alloced_elts[allocated--]);
     case 11:			/* pasta waiter stack */
-        kfree((void*)alloced_elts[allocated--]);
+        free((void*)alloced_elts[allocated--]);
     case 10:			/* salad waiter stack */
-        kfree((void*)alloced_elts[allocated--]);
+        free((void*)alloced_elts[allocated--]);
     case 9:			/* host stack */
-        kfree((void*)alloced_elts[allocated--]);
+        free((void*)alloced_elts[allocated--]);
     case 8:			/* steak_cv */
         kthread_cond_dealloc(alloced_elts[allocated--]);
     case 7:			/* pasta_cv */
@@ -76,8 +81,8 @@ int dealloc_ret(int allocated, int alloced_elts[]) {
     case 0:			/* id_mutex */
         kthread_mutex_dealloc(alloced_elts[allocated--]);
     default:
-        kfree((void*)stacks);
-        kfree((void*)seats);
+        free((void*)stacks);
+        free((void*)seats);
         return -1;
     }
     return -1;
@@ -107,12 +112,12 @@ void sit_student(int lid) {
         dealloc_ret(allocated, alloced_elts);
         return;
         /* i--; */
-        /* return kfree((void*)alloced_elts[allocated--]); */
+        /* return free((void*)alloced_elts[allocated--]); */
     }
     waiting_students--;
     seating_students++;
     seats[seats_i] = 0;
-    cprintf("Student%d joined the table\n", lid);
+    printf(2, "Student%d joined the table\n", lid);
 }
 
 void* host_func() {
@@ -150,7 +155,7 @@ void* host_func() {
 }
 
 void waiter_print(waiterno, quant_now, buf_size) {
-    cprintf("Waiter%d increased his buffer to %d/%d\n", waiterno,
+    printf(2, "Waiter%d increased his buffer to %d/%d\n", waiterno,
             quant_now, buf_size);
 }
 
@@ -248,11 +253,11 @@ void* eating_sudent_func() {
 
     /* get 1st dish */
     while (foods[dish] == 0) {
-        cprintf("Student%d waits for %d\n", stud_id, dish);
+        printf(2, "Student%d waits for %d\n", stud_id, dish);
         kthread_cond_wait(cvs[dish], dishes[dish]);
     }
     foods[dish]--;
-    cprintf("Student%d acquired %d\n", stud_id, dish);
+    printf(2, "Student%d acquired %d\n", stud_id, dish);
     kthread_mutex_unlock(dishes[dish]);
 
 
@@ -260,35 +265,35 @@ void* eating_sudent_func() {
     dish = (stud_id + 1) % 3;
     kthread_mutex_lock(dishes[dish]);
     while (foods[dish] == 0) {
-        cprintf("Student%d waits for %d\n", stud_id, dish);
+        printf(2, "Student%d waits for %d\n", stud_id, dish);
         kthread_cond_wait(cvs[dish], dishes[dish]);
     }
     foods[dish]--;
-    cprintf("Student%d acquired %d\n", stud_id, dish);
+    printf(2, "Student%d acquired %d\n", stud_id, dish);
     kthread_mutex_unlock(dishes[dish]);
 
-    cprintf("Student%d started long eating process\n", stud_id);
+    printf(2, "Student%d started long eating process\n", stud_id);
     eat_proc(LONG_EAT);
 
     /* get 3rd dish */
     dish = (stud_id + 2) % 3;
     kthread_mutex_lock(dishes[dish]);
     while (foods[dish] == 0) {
-        cprintf("Student%d waits for %d\n", stud_id, dish);
+        printf(2, "Student%d waits for %d\n", stud_id, dish);
         kthread_cond_wait(cvs[dish], dishes[dish]);
     }
     foods[dish]--;
-    cprintf("Student%d acquired %d\n", stud_id, dish);
+    printf(2, "Student%d acquired %d\n", stud_id, dish);
     kthread_mutex_unlock(dishes[dish]);
 
-    cprintf("Student%d started short eating process\n", stud_id);
+    printf(2, "Student%d started short eating process\n", stud_id);
     eat_proc(SHORT_EAT);
 
     stackp = kthread_get_ustack(); /* get user stack ptr */
 
     kthread_mutex_lock(host_mutex);
     seating_students--;		/* get up and leave */
-    cprintf("Student%d left the table\n", stud_id);
+    printf(2, "Student%d left the table\n", stud_id);
     update_stats();
     fill_seats(stackp);
     kthread_mutex_unlock(host_mutex);
@@ -306,21 +311,21 @@ int sim_init(int init[]) {
     int salad_mutex, pasta_mutex, steak_mutex, stud_initial;
     int chairs_created = 0;
 
-    cprintf("klt simulation starting.\n");
+    printf(2, "klt simulation starting.\n");
 
     stud_initial = init[0];
+    chair_num = init[2];
 
     /* update static vars  */
-    if ((stacks = (void*)kalloc()) == 0)
+    if ((stacks = (void*)malloc(sizeof(void*) * (chair_num + 4))) == 0)
         return -1;
-    if ((seats = (void*)kalloc()) == 0) {
-        kfree((void*)stacks);
+    if ((seats = (void*)malloc(sizeof(void*) * chair_num)) == 0) {
+        free((void*)stacks);
         return -1;
     }
 
     sim_on = 0;
     initial_stu = stud_initial;
-    chair_num = init[2];
     memset(seats, 0, sizeof(int) * chair_num);
     seating_students = 0;
     waiting_students = max((init[0] - chair_num), 0) + init[1];
@@ -375,7 +380,7 @@ int sim_init(int init[]) {
 
     i = 0;
     /* create the host */
-    if ((stacks[i] = kalloc()) == 0)
+    if ((stacks[i] = malloc(MAX_STACK_SIZE)) == 0)
         return dealloc_ret(allocated, alloced_elts);
     alloced_elts[++allocated] = (int)stacks[i];
 
@@ -383,10 +388,10 @@ int sim_init(int init[]) {
                                    MAX_STACK_SIZE)) < 0)
         return dealloc_ret(allocated, alloced_elts);
 
-    K_DEBUG_PRINT(3, "host_tid=%d", host_tid);
+    DEBUG_PRINT(3, "host_tid=%d", host_tid);
     /* create the waiters: */
     /* SALAD */
-    if ((stacks[i] = kalloc()) == 0)
+    if ((stacks[i] = malloc(MAX_STACK_SIZE)) == 0)
         return dealloc_ret(allocated, alloced_elts);
     alloced_elts[++allocated] = (int)stacks[i];
 
@@ -395,7 +400,7 @@ int sim_init(int init[]) {
         return dealloc_ret(allocated, alloced_elts);
 
     /* PASTA */
-    if ((stacks[i] = kalloc()) == 0)
+    if ((stacks[i] = malloc(MAX_STACK_SIZE)) == 0)
         return dealloc_ret(allocated, alloced_elts);
     alloced_elts[++allocated] = (int)stacks[i];
 
@@ -404,7 +409,7 @@ int sim_init(int init[]) {
         return dealloc_ret(allocated, alloced_elts);
 
     /* STEAK */
-    if ((stacks[i] = kalloc()) == 0)
+    if ((stacks[i] = malloc(MAX_STACK_SIZE)) == 0)
         return dealloc_ret(allocated, alloced_elts);
     alloced_elts[++allocated] = (int)stacks[i];
 
@@ -417,7 +422,7 @@ int sim_init(int init[]) {
     /* create the sitting students */
 
     while (chairs_created < chair_num) {
-        if ((stacks[i] = kalloc()) == 0)
+        if ((stacks[i] = malloc(MAX_STACK_SIZE)) == 0)
             return dealloc_ret(allocated, alloced_elts);
         alloced_elts[++allocated] = (int)stacks[i++];
 
@@ -443,7 +448,7 @@ int sim_init(int init[]) {
     /* if (kthread_join(host_tid) < 0) */
     /*     return dealloc_ret(allocated, alloced_elts); */
 
-    K_DEBUG_PRINT(1,"exiting.", 0);
+    DEBUG_PRINT(1,"exiting.", 0);
     kthread_exit();
     return 0;			/* never reached. */
 }
@@ -452,7 +457,7 @@ int sim_start() {
     int man_init[6] = {1,0,1,4,4,4};
     char* msg = "klt auto starting\n";
 
-    cprintf(msg);
+    printf(2, msg);
     return sim_init(man_init);
 
 }
