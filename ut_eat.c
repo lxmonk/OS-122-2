@@ -62,13 +62,14 @@ void getConfigValues(int val_array[6])
     DEBUG_PRINT(2,"inside",1);
     int i,j,t,k;
     printf(logFile,"Student %d  started long eating process\n",id);
-    for(i=1;i < 1000;i++) {
-        DEBUG_PRINT(6,"long eat - iter %d",i);
-         for(j=1; j <  1000;j++) {
-             t = 1;
-             for(k=1;k < 20;k++)
-                 t *= k;
-         }
+    for(i=1;i < 100000;i++) {
+        if (i % 1000 == 0)
+            DEBUG_PRINT(6,"long eat - iter %d",i);
+        for(j=1; j <  1000;j++) {
+            t = 1;
+            for(k=1;k < 20;k++)
+                t *= k;
+        }
     }
 }
 
@@ -142,7 +143,6 @@ void student_func() {
     }
     food[id % 3]--;
     printf(logFile,"Student %d acquired %d\n",id,id%3);
-    long_eating_process(id);
     //    uthread_setpr(8); // update priority after eating
     while (food[(id+1) % 3] == 0) {
         printf(logFile,"Student %d waits for %d\n",id,(id+1)%3);
@@ -189,7 +189,7 @@ int main() {
         exit();
     }
 
-
+    logFile = 2;
     getConfigValues(init);
     food[SALAD]=init[SALAD_BUFFER_SIZE];
     food[PASTA]=init[PASTA_BUFFER_SIZE];
