@@ -244,8 +244,12 @@ fork_kthread( void*(*start_func)(), void* stack, void* stack_for_kfree)
     *np->tf = *proc->tf;
 
     /* A&T use the given stack */
+    /* np->tf->ebp = (uint) stack; */
     np->tf->esp = (uint) stack;
     np->tf->eip = (uint) start_func;
+
+    /* np->context->eip = (uint) start_func/\* (uint)forkret *\/; */
+
     /* A&T end */
 
     for(i = 0; i < NOFILE; i++)
@@ -467,7 +471,7 @@ forkret(void)
     // be run from main().
     first = 0;
     initlog();
-    K_DEBUG_PRINT(2, "after initlog", 100);
+    /* K_DEBUG_PRINT(2, "after initlog", 100); */
   }
 
   // Return to "caller", actually trapret (see allocproc).

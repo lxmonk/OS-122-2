@@ -155,6 +155,7 @@ void waiter_print(waiterno, quant_now, buf_size) {
 }
 
 void* salad_func() {
+
     while (sim_on == 0)
         yield();
 
@@ -171,6 +172,7 @@ void* salad_func() {
     return (void*)0;		/* never reached.. */
 }
 void* pasta_func() {
+
     while (sim_on == 0)
         yield();
 
@@ -187,6 +189,7 @@ void* pasta_func() {
 }
 
 void* steak_func() {
+
     while (sim_on == 0)
         yield();
 
@@ -424,6 +427,7 @@ int sim_init(int init[]) {
                 return dealloc_ret(allocated, alloced_elts);
             seating_students++;
         }
+        chairs_created++;
     }
 
     sim_on = 1;
