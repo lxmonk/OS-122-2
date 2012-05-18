@@ -105,6 +105,7 @@ found:
   p->context->eip = (uint)forkret;
 
   /* A&T initialize */
+  p->ustack = 0;
   p->threads_created = 0;
   p->ctime = gettime();		/* creation time */
   p->etime = 0;			/* ????????? */
@@ -208,7 +209,7 @@ struct k_thread_counter {
 
 
 int		/* A&T for use by kthread_create */
-fork_kthread( void*(*start_func)(), void* stack)
+fork_kthread( void*(*start_func)(), void* stack, void* stack_for_kfree)
 {
     int i, pid;
     struct proc *np;
@@ -255,7 +256,7 @@ fork_kthread( void*(*start_func)(), void* stack)
     pid = np->pid;
     np->state = RUNNABLE;
     safestrcpy(np->name, proc->name, sizeof(proc->name));
-
+    np->ustack = stack_for_kfree;
     return pid;
 }
 
@@ -668,4 +669,9 @@ void kthread_UNblock(int thread_id){
             return;
         }
     }
+}
+
+void* proc_get_ustack() {
+    return proc->ustack;
+
 }

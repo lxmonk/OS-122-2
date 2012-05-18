@@ -11,3 +11,4 @@ kernel
 /bootblock
 /initcode.out
 /mkfs
+*.patch

@@ -22,7 +22,7 @@ static int cvs_used[MAX_CONDS];
 
 int
 kthread_create(void*(*start_func)(), void* stack, uint stack_size) {
-    return fork_kthread(start_func, (stack + stack_size));
+    return fork_kthread(start_func, (stack + stack_size), stack);
 }
 
 int kthread_id() {
@@ -184,4 +184,8 @@ int kthread_cond_signal(int cond_id) {
         cv->count--;
     }
     return 0;
+}
+
+void* kthread_get_ustack() {
+    return proc_get_ustack();
 }

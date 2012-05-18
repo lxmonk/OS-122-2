@@ -33,3 +33,6 @@ int kthread_cond_alloc();
 int kthread_cond_dealloc( int cond_id );
 int kthread_cond_wait( int cond_id, int mutex_id );
 int kthread_cond_signal( int cond_id );
+
+
+void* kthread_get_ustack();

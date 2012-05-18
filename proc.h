@@ -77,10 +77,11 @@ struct proc {
   struct k_thread_counter *k_threads;
   struct k_thread_join *join_facility;
   int ctime, etime, rtime, lasttime;
+  void* ustack;
 };
 
 /* A&T for kernel threads */
-int fork_kthread( void*(*start_func)(), void* stack);
+int fork_kthread( void*(*start_func)(), void* stack, void* stack_for_kfree);
 int get_id(void);
 void proc_kthread_exit(void);
 int proc_kthread_join( int thread_id );
@@ -97,3 +98,5 @@ void kthread_block(int thread_id);
 
 //change the kthread state to RUNNABLE
 void kthread_UNblock(int thread_id);
+
+void* proc_get_ustack();
