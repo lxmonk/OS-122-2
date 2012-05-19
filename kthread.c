@@ -21,8 +21,24 @@ static int cvs_used[MAX_CONDS];
 
 
 int
-sys_kthread_create(void*(*start_func)(), void* stack, uint stack_size) {
-    return fork_kthread(start_func, (stack + stack_size), stack);
+sys_kthread_create(/* void*(*start_func)(), void* stack, uint stack_size */) {
+    void*(*v_start_func)();
+    void* v_stack;
+    void* malloced_stack;
+    int stack_size;
+    int start_func, stack;
+    uint u_stack_size;
+
+    if (argint(0, &start_func) < 0 || argint(1, &stack) < 0 ||
+        argint(2, &stack_size) < 0)
+        return -1;
+
+    u_stack_size = (uint)stack_size;
+    malloced_stack = (void*)stack;
+    v_stack = ((void*)(stack + u_stack_size));
+    v_start_func = ((void*)(&start_func));
+
+    return fork_kthread(v_start_func, v_stack, malloced_stack);
     /* return fork_kthread(start_func, (stack + stack_size), stack); */
 }
 
@@ -31,15 +47,20 @@ int sys_kthread_id() {
 }
 
 void sys_kthread_exit() {
-    void proc_kthread_exit();
+    proc_kthread_exit();
 }
 
-int sys_kthread_join( int thread_id ) {
+int sys_kthread_join(void) {
+    int thread_id;
+
+    if (argint(0, &thread_id) < 0)
+        return -1;
     return proc_kthread_join(thread_id);
 }
 
-void sys_kthread_yield() {
+int sys_kthread_yield(void) {
     yield();
+    return 0;
 }
 int sys_kthread_mutex_alloc() {
     int i;
@@ -74,16 +95,26 @@ int sys_kthread_mutex_alloc() {
     return i;
 }
 
-int sys_kthread_mutex_dealloc( int mutex_id ) {
+int sys_kthread_mutex_dealloc() {
+    int mutex_id;
+
+    if (argint(0, &mutex_id) < 0)
+        return -1;
+
     acquire(&array_lock);
     mutex_used[mutex_id]=0;
     release(&array_lock);
     return 0;
 }
 
-int sys_kthread_mutex_lock( int mutex_id ) {
+int sys_kthread_mutex_lock() {
 
+    int mutex_id;
     kthread_mutex_t *mutex;
+
+    if (argint(0, &mutex_id) < 0)
+        return -1;
+
     acquire(&(mutex_array[mutex_id].lock));
     mutex=&(mutex_array[mutex_id]);
     // no room for new kthread
@@ -106,9 +137,14 @@ int sys_kthread_mutex_lock( int mutex_id ) {
 
     return 0;
 }
-int sys_kthread_mutex_unlock( int mutex_id ){
+int sys_kthread_mutex_unlock(){
 
+    int mutex_id;
     kthread_mutex_t *mutex;
+
+    if (argint(0, &mutex_id) < 0)
+        return -1;
+
     acquire(&(mutex_array[mutex_id].lock));
     mutex=&(mutex_array[mutex_id]);
     // no threads waiting or mutex is not mine
@@ -158,7 +194,12 @@ int sys_kthread_cond_alloc() {
     return i;
 }
 
-int sys_kthread_cond_dealloc(int cond_id) {
+int sys_kthread_cond_dealloc(){
+    int cond_id;
+
+    if (argint(0, &cond_id) < 0)
+        return -1;
+
     acquire(&cvs_lock);
     cvs_used[cond_id] = 0;
     release(&cvs_lock);
@@ -166,8 +207,14 @@ int sys_kthread_cond_dealloc(int cond_id) {
 }
 
 
-int sys_kthread_cond_wait(int cond_id, int mutex_id) {
+int sys_kthread_cond_wait(){
+
+    int cond_id, mutex_id;
     kthread_cond_t *cv;
+
+    if (argint(0, &cond_id) < 0 || argint(1, &mutex_id) < 0)
+        return -1;
+
     cv = &(cv_arrary[cond_id]);
 
     cv->waiting_kthreads[(cv->first + cv->count) % NPROC] = get_id();
@@ -193,3 +240,9 @@ int sys_kthread_cond_signal(int cond_id) {
 void* sys_kthread_get_ustack() {
     return proc_get_ustack();
 }
+
+
+
+/* int kyield(void) { */
+/*     return -1; */
+/* } */

@@ -10,7 +10,7 @@
 
 #include "user.h"
 
-#define T_A_DEBUG 0
+#define T_A_DEBUG 4
 
 #define MAX_STUDS 2000
 #define LONG_EAT 100000
@@ -29,7 +29,9 @@
 
 /* +++++++++++++++++++++++++++++++++++++++++++++ */
 
-void yield() {}
+void yield() {
+    kthread_yield();
+}
 
 static int host_mutex, id_mutex;
 static int host_cv, salad_cv, pasta_cv, steak_cv;
@@ -44,8 +46,6 @@ static int dishes[3], cvs[3];
 static int foods[3];
 static void** seats = 0;
 static int global_stud_id;
-
-
 
 
 int dealloc_ret(int allocated, int alloced_elts[]) {
@@ -123,6 +123,7 @@ void sit_student(int lid) {
 void* host_func() {
     int local_id_copy;
 
+    DEBUG_PRINT(4, "inside.", 100);
     while(sim_on == 0)
         yield();
 
@@ -161,6 +162,8 @@ void waiter_print(waiterno, quant_now, buf_size) {
 
 void* salad_func() {
 
+    DEBUG_PRINT(4, "inside.", 100);
+
     while (sim_on == 0)
         yield();
 
@@ -176,7 +179,10 @@ void* salad_func() {
     kthread_exit();
     return (void*)0;		/* never reached.. */
 }
+
 void* pasta_func() {
+
+    DEBUG_PRINT(4, "inside.", 100);
 
     while (sim_on == 0)
         yield();
@@ -194,6 +200,8 @@ void* pasta_func() {
 }
 
 void* steak_func() {
+
+    DEBUG_PRINT(4, "inside.", 100);
 
     while (sim_on == 0)
         yield();
@@ -244,6 +252,7 @@ void* eating_sudent_func() {
     int dish;
     void* stackp;
 
+    DEBUG_PRINT(4, "inside.", 100);
     kthread_mutex_lock(id_mutex);
     stud_id = global_stud_id++;
     kthread_mutex_unlock(id_mutex);
@@ -435,7 +444,10 @@ int sim_init(int init[]) {
         chairs_created++;
     }
 
+    DEBUG_PRINT(4, "before: sim_on=%d", sim_on);
     sim_on = 1;
+    DEBUG_PRINT(4, "after: sim_on=%d", sim_on);
+
     yield();
 
     while (sim_on != -1)
@@ -467,4 +479,10 @@ int sys_kltsim(void) {
 
     /* return 0; */
     return sim_start();
+}
+
+int main (int argc, char* argv[]) {
+    printf(2, "inside kltsim!!\n");
+    return sim_start();
+
 }

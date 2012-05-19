@@ -8,10 +8,13 @@ int main(int argc, char* argv[]) {
 
     int params[] = {1,0,4,4,4,4};
 
-    kltsim(params);
+    /* kltsim(params); */
+    printf(2, "ukltsim: kyield=%d\n", kyield());
+    kyield();
+    /* kthread_yield(); */
     printf(2, "%d:DONE! uptime=%d\n", uptime(), uptime());
     sleep(10);
     printf(2, "%d:DONE! uptime=%d\n", uptime(), uptime());
     exit();
-    return 0;
+    return params[0];
 }

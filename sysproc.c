@@ -88,3 +88,10 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+/* A&T syscall */
+
+/* int */
+/* sys_kyield(void) { */
+/*     return -1; */
+/* } */

@@ -103,17 +103,18 @@ extern int sys_kltsim(void);
 extern int sys_kthread_create(void);
 extern int sys_kthread_id(void);
 extern int sys_kthread_exit(void);
-extern int sys_kthread_join();
-extern int sys_kthread_mutex_alloc();
-extern int sys_kthread_mutex_dealloc();
-extern int sys_kthread_mutex_lock();
-extern int sys_kthread_mutex_unlock();
-extern int sys_kthread_cond_alloc();
-extern int sys_kthread_cond_dealloc();
-extern int sys_kthread_cond_wait();
-extern int sys_kthread_cond_signal();
-extern int sys_kthread_get_ustack();
-extern int sys_kthread_yield();
+extern int sys_kthread_join(void);
+extern int sys_kthread_mutex_alloc(void);
+extern int sys_kthread_mutex_dealloc(void);
+extern int sys_kthread_mutex_lock(void);
+extern int sys_kthread_mutex_unlock(void);
+extern int sys_kthread_cond_alloc(void);
+extern int sys_kthread_cond_dealloc(void);
+extern int sys_kthread_cond_wait(void);
+extern int sys_kthread_cond_signal(void);
+extern int sys_kthread_get_ustack(void);
+extern int sys_kthread_yield(void);
+/* extern int sys_kyield(void); */
 
 
 
@@ -139,6 +140,12 @@ static int (*syscalls[])(void) = {
 [SYS_link]    sys_link,
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
+
+
+/* fillers */
+[SYS_mkdir]   sys_mkdir,
+[SYS_close]   sys_close,
+
 /* [SYS_simstat] sys_kltsim, /\* sys_simstat, *\/ */
 /* [SYS_kltsim]     sys_kltsim, */
 [SYS_kthread_create]    sys_kthread_create,
@@ -155,6 +162,7 @@ static int (*syscalls[])(void) = {
 [SYS_kthread_cond_signal] sys_kthread_cond_signal,
 [SYS_kthread_get_ustack] sys_kthread_get_ustack,
 [SYS_kthread_yield] sys_kthread_yield,
+/* [SYS_kyield]   sys_kyield, */
 };
 
 void

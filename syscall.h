@@ -40,3 +40,4 @@
 #define SYS_kthread_cond_signal 35
 #define SYS_kthread_get_ustack 36
 #define SYS_kthread_yield 37
+#define SYS_kyield 38
